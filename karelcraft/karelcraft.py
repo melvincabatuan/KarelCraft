@@ -5,7 +5,8 @@ for a KarelCraft program. It must include the following:
 from karelcraft.karelcraft import *
 
 Author : Melvin Cabatuan
-Credits: Nicholas Bowman, Kylie Jue, Tyler Yep,
+Credits: pokepetter (Ursina)
+         Nicholas Bowman, Kylie Jue, Tyler Yep (stanfordkarel module)
          clear-code-projects (Minecraft-in-Python)
          StanislavPetrovV
 License: MIT

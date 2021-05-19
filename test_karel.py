@@ -1,20 +1,36 @@
 from karelcraft.karelcraft import *
+from enum import Enum
+
+class Mode(Enum):
+    block  = 1
+    beeper = 2
+    paint  = 3
+
+# Set the item to put in corner
+# mode = Mode.beeper
+# mode = Mode.paint
+mode = Mode.block
 
 def main():
     """ Your code goes here! """
     while front_is_clear():
-        put_block()
-        # put_beeper()
-        # paint_corner('greegrid_position(n')
+        if mode == Mode.block:
+            put_block()
+        elif mode == Mode.beeper:
+            put_beeper()
+        elif mode == Mode.paint:
+            paint_corner('green')
+        else:
+            put_beeper()
+
         move()
 
         if front_is_blocked():
             turn_left()
 
-        if block_present():
-            print("Breaking...")
+        if block_present() or beeper_present() or color_present():
+            print("Perimeter done...")
             break
-
 
 if __name__ == "__main__":
     run_karel_program()
@@ -44,4 +60,6 @@ olive =         rgb(128, 128, 0)
 peach =         rgb(255, 218, 185)
 gold =          rgb(255, 215, 0)
 salmon =        rgb(250, 128, 114)
+...
+
 '''

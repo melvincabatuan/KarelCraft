@@ -204,7 +204,7 @@ left_is_clear()     left_is_blocked()      Is there a wall to Karel’s left?
 
 right_is_clear()    right_is_blocked()     Is there a wall to Karel’s right?
 
-beepers_present()   no_beepers_present()   Are there beepers on this corner?
+beeper_present()    no_beeper_present()     Is there a beeper on this corner?
 
 beepers_in_bag()    no_beepers_in_bag()    Any there beepers in Karel’s bag?
 
@@ -955,16 +955,16 @@ def handle_bigger_worlds():
         move()
         turn_right()
 
-def random_coloring():
+def random_blocks():
   if front_is_blocked():
     handle_column_world()
   else:
     handle_bigger_worlds()
 
 
-def main():
-  random_coloring()
+# def main():
+#   random_blocks()
 
 
-if __name__ == "__main__":
-  run_karel_program()
+# if __name__ == "__main__":
+#   run_karel_program()

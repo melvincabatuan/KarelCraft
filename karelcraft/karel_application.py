@@ -2,7 +2,8 @@
 This file is the main object running the KarelCraft application.
 
 Author : Melvin Cabatuan
-Credits: Nicholas Bowman, Kylie Jue, Tyler Yep,
+Credits: pokepetter (Ursina)
+         Nicholas Bowman, Kylie Jue, Tyler Yep (stanfordkarel module)
          clear-code-projects (Minecraft-in-Python)
          StanislavPetrovV
 License: MIT
@@ -26,17 +27,24 @@ class App(Ursina):
     def __init__(self, code_file: Path) -> None:
         super().__init__()
         self.karel = Karel()
-        self.speed = WAIT_TIME # Wait per step
+        self.speed = WAIT_TIME    # Wait per step
+        self.setup_code(code_file)
         EditorCamera()
         self.set_3d()
         self.setup_textures()
         self.setup_lights()
         self.setup_window()
-        self.setup_code(code_file)
+        self.init_prompt()
 
     def setup_window(self) -> None:
+        window.title = 'Running ' + self.student_code.module_name + '.py'
         window.color = color.black
+        # window.render_mode = 'colliders' # Debugging
+        # window.render_mode = 'normals'
+        # window.render_mode = 'wireframe'
+        # window.icon  = 'icon.png'
         # window.fullscreen = True
+        window.borderless = False
         window.exit_button.visible = False
         window.fps_counter.enabled = False
 
@@ -58,6 +66,20 @@ class App(Ursina):
         Light(type='ambient', color=(0.6, 0.6, 0.6, 1))
         Light(type='directional', color=(0.6, 0.6, 0.6, 1), direction=(1, 1, 1))
 
+    def setup_buttons(self) -> None:
+        view2d_button = Button(position=(0,0), origin=(-.5,.5), color=color.dark_gray, text='<white>2D View', scale=(.25, .05))
+        view2d_button.scale *= .75
+        view2d_button.on_click = self.set_2d
+
+    def init_prompt(self) -> None:
+        self.prompt = Text(f'Position : {self.karel.grid_position}; Direction: {self.karel.facing_to()}',
+        position = window.center + Vec2(-0.14, -0.42),
+        scale = 1)
+
+    def update_prompt(self, agent_action) -> None:
+        self.prompt.text = f'''      \t {agent_action}
+        Position @ {self.karel.grid_position()} ==> {self.karel.facing_to()}
+        '''
     def set_3d(self) -> None:
         camera.position = (MAP_SIZE // 2, -1.5*MAP_SIZE, -1.4*MAP_SIZE)
         camera.rotation_x = -55
@@ -76,6 +98,7 @@ class App(Ursina):
           or key == 'arrow_left' or key == 'arrow_right':
             # Manual Movement
             self.karel.user_move(key)
+            self.update_prompt('move()')
         elif key == '=':
             print("Make faster...")
             self.speed -= 0.05
@@ -109,11 +132,9 @@ class App(Ursina):
         def wrapper() -> None:
             # execute Karel function
             karel_fn()
-            fname = karel_fn.__name__+'()'
+            agent_action = karel_fn.__name__+'()'
             # show prompt to user
-            self.prompt.text = f'''            \t {fname}
-            Position @ {self.karel.grid_position()} ==> {self.karel.facing_to()}
-            '''
+            self.update_prompt(agent_action)
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
@@ -127,11 +148,9 @@ class App(Ursina):
         def wrapper(key: str) -> None:
             # execute Karel function
             karel_fn(key)
-            fname =  karel_fn.__name__+f'("{key}")'
+            agent_action =  karel_fn.__name__+f'("{key}")'
             # show prompt to user
-            self.prompt.text = f'''            \t {fname}'
-            Position @ {self.karel.grid_position()} ==> {self.karel.facing_to()}
-            '''
+            self.update_prompt(agent_action)
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
@@ -144,11 +163,9 @@ class App(Ursina):
         def wrapper() -> None:
             # execute Karel function
             karel_fn(self.block_texture) # send texture to Karel
-            fname = karel_fn.__name__+'() => ' + self.texture_name
+            agent_action = karel_fn.__name__+'() => ' + self.texture_name
             # show prompt to user
-            self.prompt.text = f'''      \t {fname}'
-            Position @ {self.karel.grid_position()} ==> {self.karel.facing_to()}
-            '''
+            self.update_prompt(agent_action)
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
@@ -181,13 +198,11 @@ class App(Ursina):
 
     def run_program(self) -> None:
         Text(TITLE, position=window.center + Vec2(-0.14, 0.48), scale = 2)
-        self.prompt = Text(f'Position : {self.karel.grid_position}; Direction: {self.karel.facing_to()}',
-            position = window.center + Vec2(-0.14, -0.42),
-            scale = 1)
         try:
            self.student_code.mod.main()  # type: ignore
-           taskMgr.step()
-
+           window.title = 'Manual mode: Use WASD or Arrow keys to control agent'
+           base.win.requestProperties(window)
+           # taskMgr.step()
         except Exception as e:
             print(e)
             print("Karel Error", "Karel Crashed!")
