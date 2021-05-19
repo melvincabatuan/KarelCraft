@@ -28,7 +28,7 @@ def main():
     while front_is_clear():
         put_block()
         # put_beeper()
-        # paint_corner('greegrid_position(n')
+        # paint_corner('green')
         move()
 
         if front_is_blocked():
