@@ -27,7 +27,7 @@ class App(Ursina):
     def __init__(self, code_file: Path) -> None:
         super().__init__()
         self.karel = Karel()
-        self.speed = WAIT_TIME    # Wait per step
+        self.wait_time  = WAIT_TIME    # Wait per step
         self.setup_code(code_file)
         EditorCamera()
         self.set_3d()
@@ -35,7 +35,7 @@ class App(Ursina):
         self.setup_lights()
         self.setup_window()
         self.init_prompt()
-        self.setup_buttons()
+        self.setup_controls()
 
     def setup_window(self) -> None:
         window.title = 'Running ' + self.student_code.module_name + '.py'
@@ -73,11 +73,31 @@ class App(Ursina):
         if self.view_button.value[0] == '2D':
             self.set_2d()
 
-    def setup_buttons(self) -> None:
-        self.view_button = ButtonGroup(('2D', '3D'), min_selection = 1, \
-            x = -0.8, y = -0.1, \
-            default='3D', selected_color=color.green)
+    def handle_speed(self) -> None:
+        self.wait_time = 1 - self.speed_slider.value
+
+    def setup_controls(self) -> None:
+        self.view_button = ButtonGroup(('2D', '3D'),
+            min_selection = 1,
+            x = -0.8, y = 0.2,
+            default='3D',
+            selected_color=color.green
+            )
         self.view_button.on_value_changed = self.handle_view
+        self.view_button.scale *= 0.85
+
+        self.speed_slider = ThinSlider(0.0, 1.0,
+            default = 1 - WAIT_TIME,
+            step = 0.05,
+            text='Speed',
+            dynamic=True,
+            position=(-0.75, -0.4),
+            vertical = True,
+            )
+        self.speed_slider.scale *= 0.85
+        self.speed_slider.bg.color = color.white66
+        self.speed_slider.knob.color = color.green
+        self.speed_slider.on_value_changed = self.handle_speed
 
     def init_prompt(self) -> None:
         Text(TITLE, position=window.center + Vec2(-0.14, 0.48), scale = 2)
@@ -111,10 +131,10 @@ class App(Ursina):
             self.update_prompt('move()')
         elif key == '=':
             print("Make faster...")
-            self.speed -= 0.05
+            self.wait_time -= 0.05
         elif key == '-':
             print("Make slower...")
-            self.speed += 0.05
+            self.wait_time += 0.05
         elif key == '4':
             self.texture_name = 'grass'
             self.block_texture = self.grass_texture
@@ -130,6 +150,9 @@ class App(Ursina):
         elif key == '8':
             self.texture_name = 'lava'
             self.block_texture = self.lava_texture
+        elif key == 'c':
+            sys.exit()
+            scene.clear()
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
@@ -148,7 +171,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(self.speed)
+            sleep(self.wait_time)
         return wrapper
 
 
@@ -164,7 +187,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(self.speed)
+            sleep(self.wait_time)
         return wrapper
 
     def block_action_decorator(
@@ -179,7 +202,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(self.speed)
+            sleep(self.wait_time)
         return wrapper
 
     def inject_decorator_namespace(self) -> None:
