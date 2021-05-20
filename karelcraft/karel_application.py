@@ -101,9 +101,12 @@ class App(Ursina):
         self.speed_slider.knob.color = color.green
         self.speed_slider.on_value_changed = self.handle_speed
 
+    def vec2tuple(self, vec_position):
+        return tuple(map(int, vec_position))
+
     def init_prompt(self) -> None:
         Text(TITLE, position=window.center + Vec2(-0.14, 0.48), scale = 2, parent = camera.ui)
-        self.prompt = Text(f'Position : {self.karel.grid_position}; Direction: {self.karel.facing_to()}',
+        self.prompt = Text(f'Position : {self.vec2tuple(self.karel.position)}; Direction: {self.karel.facing_to()}',
         position = window.center + Vec2(-0.36, -0.43),
         scale = 1,
         parent = camera.ui
@@ -111,7 +114,7 @@ class App(Ursina):
 
     def update_prompt(self, agent_action, error_message = None) -> None:
         msg =  f'''           \t {agent_action}
-        \t Position @ {self.karel.grid_position()} ==> {self.karel.facing_to()}
+        \t Position @ {self.vec2tuple(self.karel.position)} ==> {self.karel.facing_to()}
         '''
         self.prompt.color = color.white
         if error_message:

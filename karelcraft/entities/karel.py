@@ -25,9 +25,8 @@ class Karel(Button):
             v: k for k, v in NEXT_DIRECTION_MAP.items()
     }
 
-    INIT_POSITION = (1, 1, 0)
-    POSITION_OFFSET = (0.5, 0.5, 0.5)
-    Z_OFFSET = -0.01
+    INIT_POSITION = (0, 0, 0)
+    Z_OFFSET = 0
 
     def __init__(self) -> None:
         super().__init__(
@@ -47,11 +46,10 @@ class Karel(Button):
         self.setup_collider()
 
     def init_position(self):
-        self.position = Vec3(self.INIT_POSITION) - Vec3(self.POSITION_OFFSET)
+        self.position = Vec3(self.INIT_POSITION)
 
     def setup_collider(self) -> None:
         axis = BoxCollider(self,
-            # center=self.position + self.scale/2,
             size=self.scale * Vec3(0.1, 0.1, 10),
             )
         axis.show()
@@ -59,9 +57,6 @@ class Karel(Button):
 
     def facing_to(self) -> str:
         return self.DIRECTION_MAP[tuple(self.direction)]
-
-    def grid_position(self) -> tuple:
-        return self.world.grid_position(self.position)
 
     def user_move(self, key) -> bool:
         self.direction = self.directions[key]
@@ -71,7 +66,7 @@ class Karel(Button):
     def move(self) -> None:
         if self.front_is_blocked():
             raise KarelException(
-                self.grid_position(),
+                self.position,
                 self.facing_to(),
                 'move()',
                 "ERROR: Karel attempted to move(), but its front was not clear!",
@@ -133,17 +128,17 @@ class Karel(Button):
 
     def pick_beeper(self) -> None:
         if self.beeper_present():
-            self.world.remove_beeper(self.position)
+            self.world.remove_beeper(tuple(self.position))
         else:
             raise KarelException(
-                self.grid_position(),
+                self.position,
                 self.facing_to(),
                 'pick_beeper()',
                 "ERROR: Karel attempted to pick_beeper(), but it does not exist!",
             )
 
     def beeper_present(self) -> bool:
-        return self.world.beepers.get(self.world.grid_position(self.position), False)
+        return self.world.beepers.get(tuple(self.position), False)
         # hit_info = self.intersects() # Ursina collider presents inconsistent results
         # if hit_info.hit:
         #     return hit_info.entity.type == 'Beeper'
@@ -168,7 +163,7 @@ class Karel(Button):
         return self.world.corner_color(self.position) == color
 
     def color_present(self) -> bool:
-        return self.world.paints.get(self.world.grid_position(self.position), False)
+        return self.world.paints.get(tuple(self.position), False)
         # hit_info = self.intersects()
         # if hit_info.hit:
         #     return hit_info.entity.type == 'ColorPaint'
@@ -182,7 +177,7 @@ class Karel(Button):
         self.world.add_voxel(block_pos, texture)
 
     def block_present(self) -> bool:
-        return self.world.voxels.get(self.world.grid_position(self.position), False)
+        return self.world.voxels.get(tuple(self.position), False)
         # hit_info = self.intersects()
         # if hit_info.hit:
         #     return hit_info.entity.type == 'Voxel'
@@ -193,10 +188,10 @@ class Karel(Button):
 
     def destroy_block(self) -> None:
         if self.block_present():
-            self.world.remove_voxel(self.position)
+            self.world.remove_voxel(tuple(self.position))
         else:
             raise KarelException(
-                self.grid_position(),
+                self.position,
                 self.facing_to(),
                 'destroy_block()',
                 "ERROR: Karel attempted to destroy_block(), but it does not exist!",
@@ -204,10 +199,10 @@ class Karel(Button):
 
     def remove_paint(self) -> None:
         if self.color_present():
-            self.world.remove_color(self.position)
+            self.world.remove_color(tuple(self.position))
         else:
             raise KarelException(
-                self.grid_position(),
+                self.position,
                 self.facing_to(),
                 'remove_paint()',
                 "ERROR: Karel attempted to remove_paint(), but it does not exist!",

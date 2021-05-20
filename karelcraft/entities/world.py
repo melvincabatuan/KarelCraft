@@ -21,6 +21,11 @@ class World(Entity):
         self.paints : dict[tuple[int, int], ColorPaint] = collections.defaultdict(None)
         self.grid_scale = 1
         self.create_grid()
+        self.position_correction()
+        # centering the position to intersection, e.g. (0,0),(1,1), not (0.5, 0.5)
+
+    def position_correction(self):
+        self.world_position -= self.POSITION_OFFSET
 
     def create_grid(self, height = -0.001):
         Entity(model = Grid(MAP_SIZE, MAP_SIZE, thickness=1.2),
@@ -32,41 +37,39 @@ class World(Entity):
 
     def paint_corner(self, position, key) -> None:
         paint = ColorPaint(position, key)
-        paint.tooltip = Tooltip(f'{self.grid_position(position)}: {key}')
-        self.paints[self.grid_position(position)] = paint
+        paint.tooltip = Tooltip(f'{position}: {key}')
+        self.paints[tuple(position)] = paint
 
     def corner_color(self, position) -> str:
         return self.paints.get((position.x, position.y))
 
     def add_beeper(self, position) -> None:
         beeper = Beeper(position = position)
-        beeper.tooltip = Tooltip(f'{self.grid_position(position)}')
-        self.beepers[self.grid_position(position)] = beeper
+        beeper.tooltip = Tooltip(f'{position}')
+        self.beepers[tuple(position)] = beeper
 
     def remove_beeper(self, position) -> None:
-        element = self.beepers.pop(self.grid_position(position), None)
+        element = self.beepers.pop(position, None)
         destroy(element, WAIT_TIME)
 
     def add_voxel(self, position, texture) -> None:
         voxel = Voxel(position = position, texture  = texture)
-        voxel.tooltip = Tooltip(f'{self.grid_position(position)}')
-        self.voxels[self.grid_position(position)] = voxel
+        voxel.tooltip = Tooltip(f'{position}')
+        self.voxels[tuple(position)] = voxel
+        print(self.voxels)
 
     def remove_voxel(self, position) -> None:
-        element = self.voxels.pop(self.grid_position(position), None)
+        element = self.voxels.pop(position, None)
         destroy(element, WAIT_TIME)
         del element
 
     def remove_color(self, position) -> None:
-        element = self.paints.pop(self.grid_position(position), None)
+        element = self.paints.pop(position, None)
         destroy(element, WAIT_TIME)
 
-    def grid_position(self, position) -> tuple:
-        current_position = position + self.POSITION_OFFSET
-        return tuple(map(int, current_position))
-
     def is_inside(self, position) -> bool:
-        return 0 < position[0] < MAP_SIZE and 0 <  position[1] < MAP_SIZE
+        return -0.50 < position[0] < MAP_SIZE - 0.5 \
+           and -0.50 < position[1] < MAP_SIZE - 0.5
 
     def destroy_voxels():
         pass
