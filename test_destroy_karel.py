@@ -7,9 +7,13 @@ class Mode(Enum):
     paint  = 3
 
 # Set the item to put in corner
-# mode = Mode.beepervoxel
+mode = Mode.beeper
 # mode = Mode.paint
-mode = Mode.block
+# mode = Mode.block
+
+def turn_around():
+    turn_left()
+    turn_left()
 
 def main():
     """ Your code goes here! """
@@ -22,17 +26,24 @@ def main():
             paint_corner('green')
         else:
             put_beeper()
+        move()
+
+    turn_around()
+    move()
+
+    while front_is_clear():
+        if mode == Mode.block:
+            destroy_block()
+        elif mode == Mode.beeper:
+            pick_beeper()
+        elif mode == Mode.paint:
+            remove_paint()
 
         move()
 
-        # if front_is_blocked():
-        #     turn_left()
 
-        if block_present() or beeper_present() or color_present():
-            print("Perimeter done...")
-            break
 
-    move()
+
 
 if __name__ == "__main__":
     run_karel_program()

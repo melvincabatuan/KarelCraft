@@ -2,7 +2,7 @@ from ursina import *
 import importlib.util
 from pathlib import Path
 
-from karelcraft.constants import MAP_SIZE, EAST, WEST, NORTH, SOUTH, INIT_POSITION
+from karelcraft.constants import MAP_SIZE, EAST, WEST, NORTH, SOUTH
 from karelcraft.entities.world import World
 
 class Karel(Button):
@@ -25,21 +25,29 @@ class Karel(Button):
             v: k for k, v in NEXT_DIRECTION_MAP.items()
     }
 
+    INIT_POSITION = (1, 1, 0)
+    POSITION_OFFSET = (0.5, 0.5, 0.5)
+    Z_OFFSET = -0.01
+
     def __init__(self) -> None:
         super().__init__(
-        position = Vec3(INIT_POSITION) - Vec3(0.5, 0.5, 0.5), # offset
+        position =  Vec3(0,0,0),
         model    = 'sphere',
         parent   = scene,
         color    = color.red #rgb(8,120,48) # GREEN
         )
-
-        self.world    = World(MAP_SIZE)
+        self.init_position()
+        self.world      = World(MAP_SIZE)
+        # self.parent     = self.world
         self.directions = {'a': Vec3(WEST),  'd': Vec3(EAST), \
                            'w': Vec3(NORTH), 's': Vec3(SOUTH), \
             'arrow_up': Vec3(NORTH), 'arrow_down': Vec3(SOUTH), \
           'arrow_left': Vec3(WEST), 'arrow_right': Vec3(EAST)}
         self.direction = Vec3(EAST)
         self.setup_collider()
+
+    def init_position(self):
+        self.position = Vec3(self.INIT_POSITION) - Vec3(self.POSITION_OFFSET)
 
     def setup_collider(self) -> None:
         axis = BoxCollider(self,
@@ -55,11 +63,19 @@ class Karel(Button):
     def grid_position(self) -> tuple:
         return self.world.grid_position(self.position)
 
-    def user_move(self, key) -> None:
+    def user_move(self, key) -> bool:
         self.direction = self.directions[key]
         self.position += self.direction
+        return self.world.is_inside(self.position)
 
     def move(self) -> None:
+        if self.front_is_blocked():
+            raise KarelException(
+                self.grid_position(),
+                self.facing_to(),
+                'move()',
+                "ERROR: Karel attempted to move(), but its front was not clear!",
+            )
         self.position += self.direction
 
     def facing_east(self) -> bool:
@@ -112,17 +128,14 @@ class Karel(Button):
         return not self.right_is_clear()
 
     def put_beeper(self) -> None:
-        beeper_pos = Vec3(self.position.x, self.position.y, -0.01)
+        beeper_pos = Vec3(self.position.x, self.position.y, self.Z_OFFSET)
         self.world.add_beeper(beeper_pos)
 
     def pick_beeper(self) -> None:
-        hit_info = self.intersects()
-        if hit_info.hit:
-            print('Destroying object...')
-            destroy(hit_info.entity, delay=.5)
+        if self.beeper_present():
             self.world.remove_beeper(self.position)
         else:
-            print("Nothing to remove!")
+            print("Nothing to remove!") # TODO: raise Error
 
     def beeper_present(self) -> bool:
         hit_info = self.intersects()
@@ -142,7 +155,7 @@ class Karel(Button):
         pass
 
     def paint_corner(self, key: str) -> None:
-        paint_pos = Vec3(self.position.x, self.position.y, -0.01)
+        paint_pos = Vec3(self.position.x, self.position.y, self.Z_OFFSET)
         self.world.paint_corner(paint_pos, key)
 
     def corner_color_is(self, color: str) -> bool:
@@ -158,7 +171,7 @@ class Karel(Button):
         return not self.color_present()
 
     def put_block(self, texture) -> None:
-        block_pos = Vec3(self.position.x, self.position.y, -0.01)
+        block_pos = Vec3(self.position.x, self.position.y, self.Z_OFFSET)
         self.world.add_voxel(block_pos, texture)
 
     def block_present(self) -> bool:
@@ -170,14 +183,17 @@ class Karel(Button):
     def no_block_present(self) -> bool:
         return not self.block_present()
 
-    def destroy_block(self):
-        hit_info = self.intersects()
-        if hit_info.hit:
-            print('Destroying object...')
-            destroy(hit_info.entity, delay=.5)
-            self.world.remove_beeper(self.position)
+    def destroy_block(self) -> None:
+        if self.block_present():
+            self.world.remove_voxel(self.position)
         else:
-            print("Nothing to remove!")
+            print("Nothing to remove!") # TODO: raise Error
+
+    def remove_paint(self) -> None:
+        if self.color_present():
+            self.world.remove_color(self.position)
+        else:
+            print("Nothing to remove!") # TODO: raise Error
 
     def animate_movement(self) -> None:
         particle = Entity(model='sphere',
@@ -256,9 +272,28 @@ class StudentCode:
             "right_is_blocked",
             "right_is_clear",
             "paint_corner",
+            "remove_paint",
             "corner_color_is",
             "color_present",
             "no_color_present",
         ]
         for func in functions_to_override:
             setattr(self.mod, func, getattr(karel, func))
+
+
+class KarelException(Exception):
+    def __init__(self, position: tuple,
+        direction: str,
+        action: str,
+        message: str) -> None:
+        super().__init__()
+        self.position  = position
+        self.direction = direction
+        self.action    = action
+        self.message   = message
+
+    def __str__(self) -> str:
+        return (
+            f"Karel crashed while on position {self.position}, "
+            f"facing {self.direction}\nInvalid action: {self.message}"
+        )

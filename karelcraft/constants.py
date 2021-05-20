@@ -4,8 +4,7 @@ TITLE = "KarelCraft"
 MAP_SIZE = 18
 
 # Karel
-INIT_POSITION = (1, 1, 0)  # bottom left
-WAIT_TIME = 0.3
+WAIT_TIME = 0.2
 
 # Misc
 EAST     = (1, 0, 0)

@@ -29,7 +29,7 @@ class App(Ursina):
         self.karel = Karel()
         self.wait_time  = WAIT_TIME    # Wait per step
         self.setup_code(code_file)
-        EditorCamera()
+        EditorCamera(rotation_speed = 100 )
         self.set_3d()
         self.setup_textures()
         self.setup_lights()
@@ -81,7 +81,8 @@ class App(Ursina):
             min_selection = 1,
             x = -0.8, y = 0.2,
             default='3D',
-            selected_color=color.green
+            selected_color=color.green,
+            parent = camera.ui
             )
         self.view_button.on_value_changed = self.handle_view
         self.view_button.scale *= 0.85
@@ -93,6 +94,7 @@ class App(Ursina):
             dynamic=True,
             position=(-0.75, -0.4),
             vertical = True,
+            parent = camera.ui
             )
         self.speed_slider.scale *= 0.85
         self.speed_slider.bg.color = color.white66
@@ -100,15 +102,22 @@ class App(Ursina):
         self.speed_slider.on_value_changed = self.handle_speed
 
     def init_prompt(self) -> None:
-        Text(TITLE, position=window.center + Vec2(-0.14, 0.48), scale = 2)
+        Text(TITLE, position=window.center + Vec2(-0.14, 0.48), scale = 2, parent = camera.ui)
         self.prompt = Text(f'Position : {self.karel.grid_position}; Direction: {self.karel.facing_to()}',
-        position = window.center + Vec2(-0.16, -0.42),
-        scale = 1)
+        position = window.center + Vec2(-0.36, -0.43),
+        scale = 1,
+        parent = camera.ui
+        )
 
-    def update_prompt(self, agent_action) -> None:
-        self.prompt.text = f'''      \t {agent_action}
-        Position @ {self.karel.grid_position()} ==> {self.karel.facing_to()}
+    def update_prompt(self, agent_action, error_message = None) -> None:
+        msg =  f'''           \t {agent_action}
+        \t Position @ {self.karel.grid_position()} ==> {self.karel.facing_to()}
         '''
+        self.prompt.color = color.white
+        if error_message:
+            msg = error_message + '\n' + '\t' + msg.split('\n')[1]
+            self.prompt.color = color.red
+        self.prompt.text = msg
 
     def set_3d(self) -> None:
         camera.position = (MAP_SIZE // 2, -1.5*MAP_SIZE, -1.4*MAP_SIZE)
@@ -127,8 +136,10 @@ class App(Ursina):
           or key == 'arrow_up' or key == 'arrow_down' \
           or key == 'arrow_left' or key == 'arrow_right':
             # Manual Movement
-            self.karel.user_move(key)
-            self.update_prompt('move()')
+            if self.karel.user_move(key):
+                self.update_prompt('\tmove()')
+            else:
+                self.update_prompt('move()', '\t   ERROR: Current location is forbidden!')
         elif key == '=':
             print("Make faster...")
             self.wait_time -= 0.05
@@ -150,9 +161,15 @@ class App(Ursina):
         elif key == '8':
             self.texture_name = 'lava'
             self.block_texture = self.lava_texture
-        elif key == 'c':
-            sys.exit()
-            scene.clear()
+        elif key == 'r': # reset
+            self.karel.init_position()
+            self.update_prompt('Initial State')
+        elif key == 'e': # entities
+            for e in scene.entities:
+                print(e.name)
+                if e.name == 'voxel':
+                    destroy(e)
+
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
@@ -229,14 +246,18 @@ class App(Ursina):
             self.karel.put_block
         )
 
+    def debug_message(self, text, position=window.center, origin=(-.5,.5), scale=2, duration=4) -> None:
+        debug_txt = Text(text=text, position=position, origin=origin, scale=scale, color=color.red)
+        destroy(debug_txt, delay=duration)
+
     def run_program(self) -> None:
         try:
            self.student_code.mod.main()
-           window.title = 'Manual mode: Use WASD or Arrow keys to control agent'
-           base.win.requestProperties(window)
         except Exception as e:
-            print(e)
-            print("Karel Error", "Karel Crashed!")
+            self.update_prompt(e.action, e.message)
         finally:
+            # Update the title
+            window.title = self.student_code.module_name + \
+                ' : Manual mode - Use WASD or Arrow keys to control agent'
+            base.win.requestProperties(window)
             self.run() # run the app for wasd/arrows exploration
-            return 0   # PyOS_InputHook expects an integer

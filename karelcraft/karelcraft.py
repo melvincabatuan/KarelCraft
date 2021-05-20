@@ -102,6 +102,9 @@ def not_facing_south() -> bool:
 def paint_corner(color: str) -> None:
     pass
 
+def remove_paint() -> None:
+    pass
+
 def corner_color_is(color: str) -> bool:
     pass
 
