@@ -55,10 +55,10 @@ class World(Entity):
     def remove_voxel(self, position) -> None:
         element = self.voxels.pop(self.grid_position(position), None)
         destroy(element, WAIT_TIME)
+        del element
 
     def remove_color(self, position) -> None:
         element = self.paints.pop(self.grid_position(position), None)
-        print('remove_voxel()', element)
         destroy(element, WAIT_TIME)
 
     def grid_position(self, position) -> tuple:

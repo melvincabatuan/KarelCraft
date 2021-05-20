@@ -135,13 +135,19 @@ class Karel(Button):
         if self.beeper_present():
             self.world.remove_beeper(self.position)
         else:
-            print("Nothing to remove!") # TODO: raise Error
+            raise KarelException(
+                self.grid_position(),
+                self.facing_to(),
+                'pick_beeper()',
+                "ERROR: Karel attempted to pick_beeper(), but it does not exist!",
+            )
 
     def beeper_present(self) -> bool:
-        hit_info = self.intersects()
-        if hit_info.hit:
-            return hit_info.entity.type == 'Beeper'
-        return False
+        return self.world.beepers.get(self.world.grid_position(self.position), False)
+        # hit_info = self.intersects() # Ursina collider presents inconsistent results
+        # if hit_info.hit:
+        #     return hit_info.entity.type == 'Beeper'
+        # return False
 
     def no_beeper_present(self) -> bool:
         return not self.beeper_present()
@@ -162,10 +168,11 @@ class Karel(Button):
         return self.world.corner_color(self.position) == color
 
     def color_present(self) -> bool:
-        hit_info = self.intersects()
-        if hit_info.hit:
-            return hit_info.entity.type == 'ColorPaint'
-        return False
+        return self.world.paints.get(self.world.grid_position(self.position), False)
+        # hit_info = self.intersects()
+        # if hit_info.hit:
+        #     return hit_info.entity.type == 'ColorPaint'
+        # return False
 
     def no_color_present(self) -> bool:
         return not self.color_present()
@@ -175,10 +182,11 @@ class Karel(Button):
         self.world.add_voxel(block_pos, texture)
 
     def block_present(self) -> bool:
-        hit_info = self.intersects()
-        if hit_info.hit:
-            return hit_info.entity.type == 'Voxel'
-        return False
+        return self.world.voxels.get(self.world.grid_position(self.position), False)
+        # hit_info = self.intersects()
+        # if hit_info.hit:
+        #     return hit_info.entity.type == 'Voxel'
+        # return False
 
     def no_block_present(self) -> bool:
         return not self.block_present()
@@ -187,13 +195,23 @@ class Karel(Button):
         if self.block_present():
             self.world.remove_voxel(self.position)
         else:
-            print("Nothing to remove!") # TODO: raise Error
+            raise KarelException(
+                self.grid_position(),
+                self.facing_to(),
+                'destroy_block()',
+                "ERROR: Karel attempted to destroy_block(), but it does not exist!",
+            )
 
     def remove_paint(self) -> None:
         if self.color_present():
             self.world.remove_color(self.position)
         else:
-            print("Nothing to remove!") # TODO: raise Error
+            raise KarelException(
+                self.grid_position(),
+                self.facing_to(),
+                'remove_paint()',
+                "ERROR: Karel attempted to remove_paint(), but it does not exist!",
+            )
 
     def animate_movement(self) -> None:
         particle = Entity(model='sphere',

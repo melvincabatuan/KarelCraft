@@ -245,6 +245,12 @@ class App(Ursina):
         self.student_code.mod.put_block    = self.block_action_decorator(
             self.karel.put_block
         )
+        self.student_code.mod.destroy_block = self.karel_action_decorator(
+            self.karel.destroy_block
+        )
+        self.student_code.mod.remove_paint  = self.karel_action_decorator(
+            self.karel.remove_paint
+        )
 
     def debug_message(self, text, position=window.center, origin=(-.5,.5), scale=2, duration=4) -> None:
         debug_txt = Text(text=text, position=position, origin=origin, scale=scale, color=color.red)

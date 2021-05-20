@@ -7,15 +7,16 @@ class Mode(Enum):
     paint  = 3
 
 # Set the item to put in corner
-mode = Mode.beeper
+# mode = Mode.beeper
 # mode = Mode.paint
-# mode = Mode.block
+mode = Mode.block
 
 def turn_around():
     turn_left()
     turn_left()
 
 def main():
+
     """ Your code goes here! """
     while front_is_clear():
         if mode == Mode.block:
@@ -41,6 +42,24 @@ def main():
 
         move()
 
+    # Test exceptions:
+    if mode == Mode.block:
+        destroy_block()
+        destroy_block() # Should return an exception
+
+    elif mode == Mode.beeper:
+        pick_beeper()
+        pick_beeper() # Should return an exception
+
+    elif mode == Mode.paint:
+        remove_paint()
+        remove_paint() # Should return an exception
+
+'''
+Note: Ursina collider presents inconsistent results
+e.g. detection is ok at low speed x <= 0.8 but
+doesn't detect if speed is greater.
+'''
 
 
 
