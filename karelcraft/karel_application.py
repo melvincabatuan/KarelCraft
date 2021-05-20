@@ -35,6 +35,7 @@ class App(Ursina):
         self.setup_lights()
         self.setup_window()
         self.init_prompt()
+        self.setup_buttons()
 
     def setup_window(self) -> None:
         window.title = 'Running ' + self.student_code.module_name + '.py'
@@ -66,20 +67,29 @@ class App(Ursina):
         Light(type='ambient', color=(0.6, 0.6, 0.6, 1))
         Light(type='directional', color=(0.6, 0.6, 0.6, 1), direction=(1, 1, 1))
 
+    def handle_view(self) -> None:
+        if self.view_button.value[0] == '3D':
+            self.set_3d()
+        if self.view_button.value[0] == '2D':
+            self.set_2d()
+
     def setup_buttons(self) -> None:
-        view2d_button = Button(position=(0,0), origin=(-.5,.5), color=color.dark_gray, text='<white>2D View', scale=(.25, .05))
-        view2d_button.scale *= .75
-        view2d_button.on_click = self.set_2d
+        self.view_button = ButtonGroup(('2D', '3D'), min_selection = 1, \
+            x = -0.8, y = -0.1, \
+            default='3D', selected_color=color.green)
+        self.view_button.on_value_changed = self.handle_view
 
     def init_prompt(self) -> None:
+        Text(TITLE, position=window.center + Vec2(-0.14, 0.48), scale = 2)
         self.prompt = Text(f'Position : {self.karel.grid_position}; Direction: {self.karel.facing_to()}',
-        position = window.center + Vec2(-0.14, -0.42),
+        position = window.center + Vec2(-0.16, -0.42),
         scale = 1)
 
     def update_prompt(self, agent_action) -> None:
         self.prompt.text = f'''      \t {agent_action}
         Position @ {self.karel.grid_position()} ==> {self.karel.facing_to()}
         '''
+
     def set_3d(self) -> None:
         camera.position = (MAP_SIZE // 2, -1.5*MAP_SIZE, -1.4*MAP_SIZE)
         camera.rotation_x = -55
@@ -197,12 +207,10 @@ class App(Ursina):
         )
 
     def run_program(self) -> None:
-        Text(TITLE, position=window.center + Vec2(-0.14, 0.48), scale = 2)
         try:
-           self.student_code.mod.main()  # type: ignore
+           self.student_code.mod.main()
            window.title = 'Manual mode: Use WASD or Arrow keys to control agent'
            base.win.requestProperties(window)
-           # taskMgr.step()
         except Exception as e:
             print(e)
             print("Karel Error", "Karel Crashed!")
