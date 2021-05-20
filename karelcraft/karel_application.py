@@ -20,8 +20,8 @@ from ursina import *
 from karelcraft.entities.world import World
 from karelcraft.entities.karel import Karel, StudentCode
 from karelcraft.entities.voxel import Voxel
-
-from karelcraft.constants import TITLE, MAP_SIZE, WAIT_TIME
+from karelcraft.utils.constants import TITLE, MAP_SIZE, WAIT_TIME
+from karelcraft.utils.helpers import vec2tup
 
 class App(Ursina):
     def __init__(self, code_file: Path) -> None:
@@ -101,12 +101,9 @@ class App(Ursina):
         self.speed_slider.knob.color = color.green
         self.speed_slider.on_value_changed = self.handle_speed
 
-    def vec2tuple(self, vec_position):
-        return tuple(map(int, vec_position))
-
     def init_prompt(self) -> None:
         Text(TITLE, position=window.center + Vec2(-0.14, 0.48), scale = 2, parent = camera.ui)
-        self.prompt = Text(f'Position : {self.vec2tuple(self.karel.position)}; Direction: {self.karel.facing_to()}',
+        self.prompt = Text(f'Position : {vec2tup(self.karel.position)}; Direction: {self.karel.facing_to()}',
         position = window.center + Vec2(-0.36, -0.43),
         scale = 1,
         parent = camera.ui
@@ -114,7 +111,7 @@ class App(Ursina):
 
     def update_prompt(self, agent_action, error_message = None) -> None:
         msg =  f'''           \t {agent_action}
-        \t Position @ {self.vec2tuple(self.karel.position)} ==> {self.karel.facing_to()}
+        \t Position @ {vec2tup(self.karel.position)} ==> {self.karel.facing_to()}
         '''
         self.prompt.color = color.white
         if error_message:
@@ -210,6 +207,21 @@ class App(Ursina):
             sleep(self.wait_time)
         return wrapper
 
+    def beeper_action_decorator(
+        self, karel_fn: Callable[..., None]
+        ) -> Callable[..., None]:
+        def wrapper() -> None:
+            # execute Karel function
+            num_beepers = karel_fn()
+            agent_action =  karel_fn.__name__ + f'() => ' + str(num_beepers)
+            # show prompt to user
+            self.update_prompt(agent_action)
+            # manual step Panda3D loop
+            taskMgr.step()
+            # delay by specified amount
+            sleep(self.wait_time)
+        return wrapper
+
     def block_action_decorator(
         self, karel_fn: Callable[..., None]
         ) -> Callable[..., None]:
@@ -236,10 +248,10 @@ class App(Ursina):
         self.student_code.mod.move = self.karel_action_decorator(
             self.karel.move
         )
-        self.student_code.mod.put_beeper = self.karel_action_decorator(
+        self.student_code.mod.put_beeper = self.beeper_action_decorator(
             self.karel.put_beeper
         )
-        self.student_code.mod.pick_beeper = self.karel_action_decorator(
+        self.student_code.mod.pick_beeper = self.beeper_action_decorator(
             self.karel.pick_beeper
         )
         self.student_code.mod.paint_corner = self.corner_action_decorator(
@@ -270,3 +282,16 @@ class App(Ursina):
                 ' : Manual mode - Use WASD or Arrow keys to control agent'
             base.win.requestProperties(window)
             self.run() # run the app for wasd/arrows exploration
+
+
+    def finalizeExit(self):
+        """
+        Called by `userExit()` to quit the application.
+        """
+        base.graphicsEngine.removeAllWindows()
+        if self.win is not None:
+            print("Closing window, bye!")
+            self.closeWindow(self.win)
+            self.win = None
+        self.destroy()
+        sys.exit()

@@ -1,6 +1,6 @@
 from ursina import *
 
-class ColorPaint(Button):
+class Paint(Button):
 
     def __init__(self, position = (0,0,0), key = 'green'):
         super().__init__(

@@ -1,3 +1,5 @@
+# Author: MKC
+
 from karelcraft.karelcraft import *
 from enum import Enum
 

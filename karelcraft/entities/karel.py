@@ -2,30 +2,13 @@ from ursina import *
 import importlib.util
 from pathlib import Path
 
-from karelcraft.constants import MAP_SIZE, EAST, WEST, NORTH, SOUTH
+from karelcraft.utils.helpers import vec2tup
+from karelcraft.utils.constants import MAP_SIZE, NWSE_MAP, NEXT_NWSE,\
+            NEXT_NWSE_CCW, INIT_BEEPERS, NORTH, SOUTH, EAST, WEST, INFINITY
 from karelcraft.entities.world import World
 
 class Karel(Button):
 
-    DIRECTION_MAP = {
-        EAST:  'EAST',
-        WEST:  'WEST',
-        NORTH: 'NORTH',
-        SOUTH: 'SOUTH'
-    }
-
-    NEXT_DIRECTION_MAP = {
-            Vec3(NORTH): Vec3(WEST),
-            Vec3(WEST): Vec3(SOUTH),
-            Vec3(SOUTH): Vec3(EAST),
-            Vec3(EAST): Vec3(NORTH),
-    }
-
-    NEXT_DIRECTION_MAP_RIGHT = {
-            v: k for k, v in NEXT_DIRECTION_MAP.items()
-    }
-
-    INIT_POSITION = (0, 0, 0)
     Z_OFFSET = 0
 
     def __init__(self) -> None:
@@ -33,20 +16,16 @@ class Karel(Button):
         position =  Vec3(0,0,0),
         model    = 'sphere',
         parent   = scene,
-        color    = color.red #rgb(8,120,48) # GREEN
+        color    = color.white33
         )
-        self.init_position()
         self.world      = World(MAP_SIZE)
-        # self.parent     = self.world
         self.directions = {'a': Vec3(WEST),  'd': Vec3(EAST), \
                            'w': Vec3(NORTH), 's': Vec3(SOUTH), \
             'arrow_up': Vec3(NORTH), 'arrow_down': Vec3(SOUTH), \
           'arrow_left': Vec3(WEST), 'arrow_right': Vec3(EAST)}
         self.direction = Vec3(EAST)
         self.setup_collider()
-
-    def init_position(self):
-        self.position = Vec3(self.INIT_POSITION)
+        self.num_beepers = INIT_BEEPERS
 
     def setup_collider(self) -> None:
         axis = BoxCollider(self,
@@ -56,7 +35,7 @@ class Karel(Button):
         self.collider = axis
 
     def facing_to(self) -> str:
-        return self.DIRECTION_MAP[tuple(self.direction)]
+        return NWSE_MAP[tuple(self.direction)]
 
     def user_move(self, key) -> bool:
         self.direction = self.directions[key]
@@ -98,7 +77,7 @@ class Karel(Button):
         return not self.facing_south()
 
     def turn_left(self) -> None:
-        self.direction = self.NEXT_DIRECTION_MAP[self.direction]
+        self.direction = Vec3(NEXT_NWSE[tuple(self.direction)])
 
     def direction_is_clear(self, direction) -> bool:
         new_position = self.position + direction
@@ -111,34 +90,47 @@ class Karel(Button):
         return not self.front_is_clear()
 
     def left_is_clear(self) -> bool:
-        return self.direction_is_clear( self.NEXT_DIRECTION_MAP[self.direction])
+        return self.direction_is_clear(Vec3(NEXT_NWSE[tuple(self.direction)]))
 
     def left_is_blocked(self) -> bool:
         return not self.left_is_clear()
 
     def right_is_clear(self) -> bool:
-        return self.direction_is_clear( self.NEXT_DIRECTION_MAP_RIGHT[self.direction])
+        return self.direction_is_clear(Vec3(NEXT_NWSE_CCW[tuple(self.direction)]))
 
     def right_is_blocked(self) -> bool:
         return not self.right_is_clear()
 
-    def put_beeper(self) -> None:
-        beeper_pos = Vec3(self.position.x, self.position.y, self.Z_OFFSET)
-        self.world.add_beeper(beeper_pos)
+    def put_beeper(self) -> int:
+        if self.num_beepers == 0:
+            raise KarelException(
+                self.position,
+                self.facing_to(),
+                'put_beeper()',
+                "ERROR: Karel attempted to put_beeper(), but it had none left in its bag.",
+            )
+        if self.num_beepers != INFINITY:
+            self.num_beepers -= 1
 
-    def pick_beeper(self) -> None:
-        if self.beeper_present():
-            self.world.remove_beeper(tuple(self.position))
-        else:
+        beeper_pos = Vec3(self.position.x, self.position.y, self.Z_OFFSET)
+        return self.world.add_beeper(beeper_pos)
+
+    def pick_beeper(self) -> int:
+        if self.no_beeper_present():
             raise KarelException(
                 self.position,
                 self.facing_to(),
                 'pick_beeper()',
                 "ERROR: Karel attempted to pick_beeper(), but it does not exist!",
             )
+        if self.num_beepers != INFINITY:
+            self.num_beepers += 1
+
+        return self.world.remove_beeper(self.position)
 
     def beeper_present(self) -> bool:
-        return self.world.beepers.get(tuple(self.position), False)
+        key = vec2tup(self.position)[:2]
+        return len(self.world.beepers.get(key, []))
         # hit_info = self.intersects() # Ursina collider presents inconsistent results
         # if hit_info.hit:
         #     return hit_info.entity.type == 'Beeper'
@@ -148,12 +140,10 @@ class Karel(Button):
         return not self.beeper_present()
 
     def beepers_in_bag(self) -> bool:
-        #TODO
-        pass
+        self.num_beepers != 0
 
     def no_beepers_in_bag(self) -> bool:
-        #TODO
-        pass
+        return self.num_beepers == 0
 
     def paint_corner(self, key: str) -> None:
         paint_pos = Vec3(self.position.x, self.position.y, self.Z_OFFSET)

@@ -15,7 +15,7 @@ Date of Creation: 5/17/2021
 """
 import sys
 from pathlib import Path
-from .karel_application import App
+from karelcraft.karel_application import App
 """
 The following function definitions are defined as stubs so that IDEs can recognize
 the function definitions in student code. (Credits: stanford.karel module)

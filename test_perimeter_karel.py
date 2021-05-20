@@ -1,3 +1,5 @@
+# Author: MKC
+
 from karelcraft.karelcraft import *
 from enum import Enum
 
@@ -25,14 +27,12 @@ def main():
 
         move()
 
-        # if front_is_blocked():
-        #     turn_left()
+        if front_is_blocked():
+            turn_left()
 
         if block_present() or beeper_present() or color_present():
             print("Perimeter done...")
             break
-
-    move()
 
 if __name__ == "__main__":
     run_karel_program()
