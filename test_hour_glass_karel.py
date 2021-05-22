@@ -1,5 +1,8 @@
 from karelcraft.karelcraft import *
 
+# MODE = 'beeper'
+# MODE, COLOR = 'paint', 'cyan'
+MODE = 'block'
 
 def look(direction, condition):
     while not condition():
@@ -25,9 +28,20 @@ def install_a_beeper():
     if no_beepers_present():
         put_beeper()
 
+def install(mode):
+    if mode == 'paint':
+        if no_color_present():
+            paint_corner(COLOR)
+    elif mode == 'block':
+        if no_block_present():
+            put_block()
+    else:
+        if no_beepers_present():
+            put_beeper()
+
 def go_to_upper_base(width):
     if width % 2 == 0:
-        install_a_beeper()
+        install(MODE)
     look("north", facing_north)
     move_forward(width//2)
     look("east", facing_east)
@@ -38,9 +52,9 @@ def install_triangle(width, is_bottom = True):
     for i in range(width, 0, -2):
         for _ in range(i):
             look("west", facing_west)
-            install_a_beeper()
+            install(MODE)
             move()
-        install_a_beeper()
+        install(MODE)
         if is_bottom:
             look("north", facing_north)
         else:

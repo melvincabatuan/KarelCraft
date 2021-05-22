@@ -280,6 +280,7 @@ class App(Ursina):
             # Update the title
             window.title = self.student_code.module_name + \
                 ' : Manual mode - Use WASD or Arrow keys to control agent'
+            window.center_on_screen()
             base.win.requestProperties(window)
             self.run() # run the app for wasd/arrows exploration
 
