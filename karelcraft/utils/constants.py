@@ -1,7 +1,7 @@
 TITLE = "KarelCraft"
 
 # Map
-MAP_SIZE = 19
+MAP_SIZE = 18
 WORLD_OFFSET = (0.5, 0.5, -0.01) # corrects world_position
 
 # Karel

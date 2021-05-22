@@ -136,8 +136,14 @@ class Karel(Button):
         #     return hit_info.entity.type == 'Beeper'
         # return False
 
+    def beepers_present(self) -> bool:
+        return self.beeper_present()
+
     def no_beeper_present(self) -> bool:
         return not self.beeper_present()
+
+    def no_beepers_present(self) -> bool:
+        return self.no_beeper_present()
 
     def beepers_in_bag(self) -> bool:
         self.num_beepers != 0
@@ -264,7 +270,9 @@ class StudentCode:
             "not_facing_west",
             "front_is_clear",
             "beeper_present",
+            "beepers_present",
             "no_beeper_present",
+            "no_beepers_present",
             "block_present",
             "no_block_present",
             "beepers_in_bag",

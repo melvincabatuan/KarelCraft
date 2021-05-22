@@ -60,7 +60,13 @@ def right_is_blocked() -> bool:
 def beeper_present() -> bool:
     pass
 
+def beepers_present() -> bool:
+    pass
+
 def no_beeper_present() -> bool:
+    pass
+
+def no_beepers_present() -> bool:
     pass
 
 def block_present() -> bool:

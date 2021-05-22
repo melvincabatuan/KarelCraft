@@ -9,9 +9,9 @@ class Mode(Enum):
     paint  = 3
 
 # Set the item to put in corner
-# mode = Mode.beepervoxel
-# mode = Mode.paint
-mode = Mode.block
+# mode = Mode.beeper
+mode = Mode.paint
+# mode = Mode.block
 
 def main():
     """ Your code goes here! """
@@ -21,7 +21,7 @@ def main():
         elif mode == Mode.beeper:
             put_beeper()
         elif mode == Mode.paint:
-            paint_corner('green')
+            paint_corner('gold')
         else:
             put_beeper()
 

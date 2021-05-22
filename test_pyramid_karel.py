@@ -35,8 +35,8 @@ def put_color_line(n):
   Put colors to a n squares in a row
   '''
   for _ in range(n):
-    # put_block()
-    paint_corner(get_color())
+    put_block()
+    # paint_corner(get_color())
     # put_beeper()
     move()
 
@@ -61,8 +61,8 @@ def pyramid():
   width = 1
   while front_is_clear():
     # paint_corner(get_color())
-    # put_block()
-    put_beeper()
+    put_block()
+    # put_beeper()
     move()
     width += 1
 

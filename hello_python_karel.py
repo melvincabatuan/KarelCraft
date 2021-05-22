@@ -186,6 +186,12 @@ r'''
 
                       paint_corner(color: str) -> None
 
+                      put_block() -> None
+
+                      destory_block() -> None
+
+                      remove_paint() -> None
+
 
 
                              _  _  _    _                       _
@@ -566,6 +572,17 @@ Drill 1-6 Write a Karel helper function to create an ascending staircase
 ========================================================================
 '''
 
+def put_block_line():
+  '''
+  Pre: Karel at initial state (1,1) and facing East with infinite beepers
+  Post: Beepers will completely fill a certain row
+  '''
+  while front_is_clear():
+    put_block()
+    move()
+  put_block()
+
+
 def go_to_wall():
   '''
   pre: Karel is anywhere inside the world
@@ -594,13 +611,15 @@ def staircase():
   '''
   step = 1
   while left_is_clear() and front_is_clear():
-    put_beeper_line()
+    put_block_line()
+    # put_beeper_line()
     turn_around()
     go_to_wall()
     go_to_next_step(step)
     step += 1
 
-  put_beeper_line() # handles fencepost error
+  # put_beeper_line() # handles fencepost error
+  put_block_line()
 
 
 
@@ -903,12 +922,12 @@ def rainbow_layers():
   move_inward()
   inner_layers()
 
-# def main():
-#   rainbow_layers()
+def main():
+  rainbow_layers()
 
 
-# if __name__ == "__main__":
-#   run_karel_program()
+if __name__ == "__main__":
+  run_karel_program()
 
 
 
