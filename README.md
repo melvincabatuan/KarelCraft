@@ -2,6 +2,8 @@
 
 Karel + 'MineCraft' - like environment enabled by Ursina Engine (Panda3D) 
 
+![](https://github.com/melvincabatuan/KarelCraft/blob/master/screenshots/KarelcraftHourglass.PNG)
+
 "Karel the Robot", an educational programming language for beginners (Pattis, 1970),
 remain useful for learners in programming and computational thinking. In it's most 
 recent form, you can use it to learn the multi-purpose language Python that is popular 
@@ -410,3 +412,88 @@ if __name__ == "__main__":
 ![](https://github.com/melvincabatuan/KarelCraft/blob/master/screenshots/KarelCraft11.PNG)
 
 ![](https://github.com/melvincabatuan/KarelCraft/blob/master/screenshots/KarelCraft12.PNG)
+
+### Karel creating an hourglass pattern:
+
+![](https://github.com/melvincabatuan/KarelCraft/blob/master/screenshots/KarelcraftHourglass.PNG)
+
+```python
+from karelcraft.karelcraft import *
+
+# MODE = 'beeper'
+# MODE, COLOR = 'paint', 'cyan'
+MODE = 'block'
+
+def look(direction, condition):
+    while not condition():
+        turn_left()
+
+def move_forward(steps):
+    for _ in range(steps):
+        if front_is_clear():
+            move()
+
+def get_width():
+    count = 0
+    while front_is_clear():
+        move()
+        count += 1
+    return(count)
+
+def move_to_wall():
+    while(front_is_clear()):
+        move()
+
+def install_a_beeper():
+    if no_beepers_present():
+        put_beeper()
+
+def install(mode):
+    if mode == 'paint':
+        if no_color_present():
+            paint_corner(COLOR)
+    elif mode == 'block':
+        if no_block_present():
+            put_block()
+    else:
+        if no_beepers_present():
+            put_beeper()
+
+def go_to_upper_base(width):
+    if width % 2 == 0:
+        install(MODE)
+    look("north", facing_north)
+    move_forward(width//2)
+    look("east", facing_east)
+    move_to_wall()
+
+# DRY Principle: Don't Repeat Yourself
+def install_triangle(width, is_bottom = True):
+    for i in range(width, 0, -2):
+        for _ in range(i):
+            look("west", facing_west)
+            install(MODE)
+            move()
+        install(MODE)
+        if is_bottom:
+            look("north", facing_north)
+        else:
+            look("south", facing_south)
+        if front_is_blocked():
+            break
+        move()
+        look("east", facing_east)
+        move_forward(i-1)
+
+
+def main():
+    width = get_width()
+    install_triangle(width)
+    go_to_upper_base(width)
+    install_triangle(width, is_bottom = False)
+
+
+if __name__ == "__main__":
+    run_karel_program()
+
+```
