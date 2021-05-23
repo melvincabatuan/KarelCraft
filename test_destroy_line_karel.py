@@ -3,68 +3,67 @@
 from karelcraft.karelcraft import *
 from enum import Enum
 
-# MODE = 'beeper'
-# MODE, COLOR = 'paint', 'blue'
-MODE = 'block'
+class Mode(Enum):
+    block  = 1
+    beeper = 2
+    paint  = 3
+
+# Set the item to put in corner
+# mode = Mode.beeper
+# mode = Mode.paint
+mode = Mode.block
 
 def turn_around():
     turn_left()
     turn_left()
 
-def turn_right():
-    turn_around()
-    turn_left()
-
-def install(mode):
-    if mode == 'paint':
-        if no_color_present():
-            paint_corner(COLOR)
-    elif mode == 'block':
-        if no_block_present():
-            put_block()
-    else: # beeper is default
-        if no_beepers_present():
-            put_beeper()
-
-def destroy(mode):
-    if mode == 'paint':
-        remove_paint()
-    elif mode == 'block':
-        destroy_block()
-    else:
-        pick_beeper()
-
-def create_objects():
-    while front_is_clear():
-        install(MODE)
-        move()
-        if front_is_blocked():
-            turn_left()
-        if beeper_present() or color_present() or block_present():
-            break
-
-def destroy_objects():
-    while beeper_present() or color_present() or block_present():
-        if front_is_blocked():
-            turn_right()
-        destroy(MODE)
-        move()
-
-
 def main():
+
     """ Your code goes here! """
-    create_objects()
+    while front_is_clear():
+        if mode == Mode.block:
+            put_block()
+        elif mode == Mode.beeper:
+            put_beeper()
+        elif mode == Mode.paint:
+            paint_corner('green')
+        else:
+            put_beeper()
+        move()
+
     turn_around()
-    destroy_objects()
-    destroy(MODE) # test karel exceptions for all objects
+    move()
 
+    while front_is_clear():
+        if mode == Mode.block:
+            destroy_block()
+        elif mode == Mode.beeper:
+            pick_beeper()
+        elif mode == Mode.paint:
+            remove_paint()
 
+        move()
+
+    # Test exceptions:
+    if mode == Mode.block:
+        destroy_block()
+        destroy_block() # Should return an exception
+
+    elif mode == Mode.beeper:
+        pick_beeper()
+        pick_beeper() # Should return an exception
+
+    elif mode == Mode.paint:
+        remove_paint()
+        remove_paint() # Should return an exception
 
 '''
 Note: Ursina collider presents inconsistent results
 e.g. detection is ok at low speed x <= 0.8 but
 doesn't detect if speed is greater.
 '''
+
+
 
 
 if __name__ == "__main__":

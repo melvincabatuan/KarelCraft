@@ -59,7 +59,6 @@ class World(Entity):
 
     def remove_beeper(self, position) -> int:
         key = vec2tup(position)[:2]
-        print(key)
         element = self.beepers[key].pop()
         destroy(element, WAIT_TIME)
         return len(self.beepers.get(key,[]))

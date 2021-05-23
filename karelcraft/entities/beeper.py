@@ -17,9 +17,7 @@ class Beeper(Entity):
 
     def create_text(self):
         msg = f'{self.num_beepers}'
-        print(msg)
         self.txt =Text(
-        # text = "HELLO!",
         text = msg,
         parent = self,
         scale = 12,
