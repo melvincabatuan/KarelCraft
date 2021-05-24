@@ -12,6 +12,8 @@ Date of Creation: 5/17/2021
 """
 
 import sys
+import webbrowser
+import random
 from pathlib import Path
 from time import sleep
 from typing import Callable
@@ -20,11 +22,18 @@ from ursina import *
 from karelcraft.entities.world import World
 from karelcraft.entities.karel import Karel, StudentCode
 from karelcraft.entities.voxel import Voxel
+from karelcraft.entities.cog_menu import CogMenu
 from karelcraft.utils.constants import TITLE, MAP_SIZE, WAIT_TIME
 from karelcraft.utils.helpers import vec2tup
 
 class App(Ursina):
-    def __init__(self, code_file: Path) -> None:
+
+    TEXTURE_NAMES = ('grass','stone','brick','dirt','lava', 'rose', 'dlsu')
+
+    def __init__(self,
+        code_file: Path,
+        development_mode=True,
+        ) -> None:
         super().__init__()
         self.karel = Karel()
         self.wait_time  = WAIT_TIME    # Wait per step
@@ -36,6 +45,7 @@ class App(Ursina):
         self.setup_window()
         self.init_prompt()
         self.setup_controls()
+        self.setup_menu()
 
     def setup_window(self) -> None:
         window.title = 'Running ' + self.student_code.module_name + '.py'
@@ -55,13 +65,17 @@ class App(Ursina):
         self.inject_decorator_namespace()
 
     def setup_textures(self) -> None:
-        self.grass_texture = load_texture('assets/grass_block.png') # Ursina-Panda3D loader
-        self.stone_texture = load_texture('assets/stone_block.png')
-        self.brick_texture = load_texture('assets/brick_block.png')
-        self.dirt_texture  = load_texture('assets/dirt_block.png')
-        self.lava_texture  = load_texture('assets/lava_block.png')
-        self.block_texture = self.grass_texture # default
-        self.texture_name = 'grass'
+        self.textures = {
+            'grass' : load_texture('assets/grass_block.png'),
+            'stone' : load_texture('assets/stone_block.png'),
+            'brick' : load_texture('assets/brick_block.png'),
+            'dirt'  : load_texture('assets/dirt_block.png'),
+            'lava'  : load_texture('assets/lava_block.png'),
+            'rose'  : load_texture('assets/rose_block.png'),
+            'dlsu'  : load_texture('assets/dlsu_block.png'),
+        }
+        self.texture_name = 'grass'      # default
+        self.block_texture = self.textures[self.texture_name]
 
     def setup_lights(self) -> None:
         Light(type='ambient', color=(0.6, 0.6, 0.6, 1))
@@ -76,25 +90,38 @@ class App(Ursina):
     def handle_speed(self) -> None:
         self.wait_time = 1 - self.speed_slider.value
 
+    def setup_menu(self) -> None:
+        window.cog_menu.enabled = False
+        self.menu = CogMenu({
+        'Karelcraft Repo' : Func(webbrowser.open, 'https://github.com/melvincabatuan/KarelCraft'),
+        'Change Texture <gray>[1 to 7]<default>'  : self.set_texture,
+        'Change Render Mode <gray>[F10]<default>' : window.next_render_mode,
+        'Camera 3D View <gray>[Page Up]<default>' : self.set_3d,
+        'Camera 2D View <gray>[Page Down]<default>' : self.set_2d,
+        })
+        self.menu.on_click = Func(setattr, self.menu, 'enabled', False)
+
     def setup_controls(self) -> None:
         self.view_button = ButtonGroup(('2D', '3D'),
             min_selection = 1,
             x = -0.8, y = 0.2,
             default='3D',
             selected_color=color.green,
-            parent = camera.ui
+            parent = camera.ui,
+            eternal=True,
             )
         self.view_button.on_value_changed = self.handle_view
         self.view_button.scale *= 0.85
 
         self.speed_slider = ThinSlider(0.0, 1.0,
             default = 1 - WAIT_TIME,
-            step = 0.05,
+            step = 0.02,
             text='Speed',
             dynamic=True,
             position=(-0.75, -0.4),
             vertical = True,
-            parent = camera.ui
+            parent = camera.ui,
+            eternal=True,
             )
         self.speed_slider.scale *= 0.85
         self.speed_slider.bg.color = color.white66
@@ -127,12 +154,16 @@ class App(Ursina):
         camera.rotation_x = 0
         camera.position   = (MAP_SIZE // 2, MAP_SIZE // 2, -3*MAP_SIZE)
 
+    def set_texture(self, key=None) -> None:
+        if key is None:
+            key = random.randint(1,5)
+            self.texture_name  = self.TEXTURE_NAMES[key-1]
+        else:
+            self.texture_name  = self.TEXTURE_NAMES[int(key)-1]
+        self.block_texture = self.textures[self.texture_name]
+
     def input(self, key) -> None:
-        if key == '2':
-            self.set_2d()
-        elif key == '3':
-            self.set_3d()
-        elif key == 'w' or key == 'a' or key == 's' or key == 'd' \
+        if key == 'w' or key == 'a' or key == 's' or key == 'd' \
           or key == 'arrow_up' or key == 'arrow_down' \
           or key == 'arrow_left' or key == 'arrow_right':
             # Manual Movement
@@ -146,35 +177,27 @@ class App(Ursina):
         elif key == '-':
             print("Make slower...")
             self.wait_time += 0.05
-        elif key == '4':
-            self.texture_name = 'grass'
-            self.block_texture = self.grass_texture
-        elif key == '5':
-            self.texture_name = 'stone'
-            self.block_texture = self.stone_texture
-        elif key == '6':
-            self.texture_name = 'brick'
-            self.block_texture = self.brick_texture
-        elif key == '7':
-            self.texture_name = 'dirt'
-            self.block_texture = self.dirt_texture
-        elif key == '8':
-            self.texture_name = 'lava'
-            self.block_texture = self.lava_texture
+        elif key.isdigit() and '1' <= key <= '7':
+             self.set_texture(key)
         elif key == 'r': # reset
             self.karel.init_position()
             self.update_prompt('Initial State')
-        elif key == 'e': # entities
+        elif key == 'page_down':
+            self.set_3d()
+        elif key == 'page_up':
+            self.set_2d()
+        elif key == 'e': # entities  experimental
             for e in scene.entities:
                 print(e.name)
                 if e.name == 'voxel':
                     destroy(e)
-
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
 
         super().input(key)
+
+
 
     def karel_action_decorator(
         self, karel_fn: Callable[..., None]
@@ -184,7 +207,7 @@ class App(Ursina):
             karel_fn()
             agent_action = karel_fn.__name__+'()'
             # show prompt to user
-            self.update_prompt(agent_action)
+            self.update_prompt('\t' + agent_action)
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
