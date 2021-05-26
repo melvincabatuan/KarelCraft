@@ -13,10 +13,13 @@ class Karel(Button):
 
     def __init__(self) -> None:
         super().__init__(
-        position =  Vec3(0,0,0),
-        model    = 'sphere',
+        position =  Vec3(0, 0,-0.5),
         parent   = scene,
-        color    = color.white33
+        color    = color.white,
+        model    = 'assets/block', #'sphere',
+        texture  = 'assets/karel_block',
+        rotation = Vec3(90,90,90),
+        scale = 0.5,
         )
         self.world      = World(MAP_SIZE)
         self.directions = {'a': Vec3(WEST),  'd': Vec3(EAST), \
@@ -24,7 +27,7 @@ class Karel(Button):
             'arrow_up': Vec3(NORTH), 'arrow_down': Vec3(SOUTH), \
           'arrow_left': Vec3(WEST), 'arrow_right': Vec3(EAST)}
         self.direction = Vec3(EAST)
-        self.setup_collider()
+        # self.setup_collider()
         self.num_beepers = INIT_BEEPERS
 
     def setup_collider(self) -> None:
@@ -39,6 +42,7 @@ class Karel(Button):
 
     def user_move(self, key) -> bool:
         self.direction = self.directions[key]
+        self.face2direction()
         self.position += self.direction
         return self.world.is_inside(self.position)
 
@@ -76,8 +80,20 @@ class Karel(Button):
     def not_facing_south(self) -> bool:
         return not self.facing_south()
 
+    def face2direction(self) -> None:
+        if self.direction == Vec3(SOUTH):
+            self.rotation_x = 180
+        elif self.direction == Vec3(NORTH):
+            self.rotation_x = 0
+        elif self.direction == Vec3(WEST):
+            self.rotation_x = 270
+        else:
+            self.rotation_x = 90
+
+
     def turn_left(self) -> None:
         self.direction = Vec3(NEXT_NWSE[tuple(self.direction)])
+        self.face2direction()
 
     def direction_is_clear(self, direction) -> bool:
         new_position = self.position + direction
@@ -151,15 +167,17 @@ class Karel(Button):
     def no_beepers_in_bag(self) -> bool:
         return self.num_beepers == 0
 
+    def item_position(self):
+        return Vec3(self.position.x, self.position.y, self.Z_OFFSET)
+
     def paint_corner(self, key: str) -> None:
-        paint_pos = Vec3(self.position.x, self.position.y, self.Z_OFFSET)
-        self.world.paint_corner(paint_pos, key)
+        self.world.paint_corner(self.item_position(), key)
 
     def corner_color_is(self, color: str) -> bool:
-        return self.world.corner_color(self.position) == color
+        return self.world.corner_color(self.item_position()) == color
 
     def color_present(self) -> bool:
-        return self.world.paints.get(tuple(self.position), False)
+        return self.world.paints.get(tuple(self.item_position()), False)
         # hit_info = self.intersects()
         # if hit_info.hit:
         #     return hit_info.entity.type == 'ColorPaint'
@@ -169,11 +187,10 @@ class Karel(Button):
         return not self.color_present()
 
     def put_block(self, texture) -> None:
-        block_pos = Vec3(self.position.x, self.position.y, self.Z_OFFSET)
-        self.world.add_voxel(block_pos, texture)
+        self.world.add_voxel(self.item_position(), texture)
 
     def block_present(self) -> bool:
-        return self.world.voxels.get(tuple(self.position), False)
+        return self.world.voxels.get(tuple(self.item_position()), False)
         # hit_info = self.intersects()
         # if hit_info.hit:
         #     return hit_info.entity.type == 'Voxel'

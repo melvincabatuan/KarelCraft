@@ -43,10 +43,11 @@ class World(Entity):
     def paint_corner(self, position, key) -> None:
         paint = Paint(position, key)
         paint.tooltip = Tooltip(f'Paint@{vec2tup(position)}: {key}')
-        self.paints[tuple(position)] = paint
+        self.paints[vec2tup(position)] = paint
 
     def corner_color(self, position) -> str:
-        return self.paints.get((position.x, position.y))
+        print(tuple(position))
+        return self.paints.get(tuple(position))
 
     def add_beeper(self, position) -> int:
         key = vec2tup(position)[:2]
