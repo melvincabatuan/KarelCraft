@@ -109,7 +109,7 @@ class App(Ursina):
             pressed_color = color.green,
             parent = camera.ui,
             eternal=True,
-            scale = 0.05,
+            scale = 0.06,
             )
         self.run_button.text_entity.scale = 0.8
         self.run_button.on_click = self.set_run_code
@@ -122,7 +122,7 @@ class App(Ursina):
             pressed_color = color.green,
             parent = camera.ui,
             eternal=True,
-            scale = 0.05,
+            scale = 0.06,
             )
         self.clear_button.text_entity.scale = 0.8
         self.clear_button.on_click = self.clear_objects
@@ -140,6 +140,7 @@ class App(Ursina):
         self.view_button.on_value_changed = self.handle_view
         self.view_button.scale *= 0.85
 
+        # Slider
         self.speed_slider = ThinSlider(0.0, 1.0,
             default = 1 - WAIT_TIME,
             step = 0.02,
