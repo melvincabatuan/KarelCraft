@@ -13,22 +13,25 @@ class Karel(Button):
 
     def __init__(self) -> None:
         super().__init__(
-        position =  Vec3(0, 0,-0.5),
         parent   = scene,
         color    = color.white,
         model    = 'assets/block', #'sphere',
         texture  = 'assets/karel_block',
         rotation = Vec3(90,90,90),
-        scale = 0.5,
+        scale = 0.55,
         )
-        self.world      = World(MAP_SIZE)
         self.directions = {'a': Vec3(WEST),  'd': Vec3(EAST), \
                            'w': Vec3(NORTH), 's': Vec3(SOUTH), \
             'arrow_up': Vec3(NORTH), 'arrow_down': Vec3(SOUTH), \
           'arrow_left': Vec3(WEST), 'arrow_right': Vec3(EAST)}
+        self.init_karel_params()
+
+    def init_karel_params(self) -> None:
+        self.position  = Vec3(0, 0,-0.5)
         self.direction = Vec3(EAST)
-        # self.setup_collider()
+        self.face2direction()
         self.num_beepers = INIT_BEEPERS
+        self.world      = World(MAP_SIZE)
 
     def setup_collider(self) -> None:
         axis = BoxCollider(self,

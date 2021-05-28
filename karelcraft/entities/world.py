@@ -80,3 +80,9 @@ class World(Entity):
     def is_inside(self, position) -> bool:
         return -0.50 < position[0] < MAP_SIZE - 0.5 \
            and -0.50 < position[1] < MAP_SIZE - 0.5
+
+    def clear_blocks(self) -> None:
+        for k in self.voxels.keys():
+            destroy(self.voxels[k])
+
+

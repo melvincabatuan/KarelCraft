@@ -20,7 +20,7 @@ from typing import Callable
 from ursina import *
 
 from karelcraft.entities.world import World
-from karelcraft.entities.karel import Karel, StudentCode
+from karelcraft.entities.karel import Karel, StudentCode, KarelException
 from karelcraft.entities.voxel import Voxel
 from karelcraft.entities.cog_menu import CogMenu
 from karelcraft.utils.constants import TITLE, MAP_SIZE, WAIT_TIME
@@ -38,6 +38,7 @@ class App(Ursina):
         self.karel = Karel()
         self.wait_time  = WAIT_TIME    # Wait per step
         self.setup_code(code_file)
+        self.run_code = False
         EditorCamera(rotation_speed = 100 )
         self.set_3d()
         self.setup_textures()
@@ -48,12 +49,11 @@ class App(Ursina):
         self.setup_menu()
 
     def setup_window(self) -> None:
-        window.title = 'Running ' + self.student_code.module_name + '.py'
+        window.title = TITLE
         window.color = color.black
         # window.render_mode = 'colliders' # Debugging
         # window.render_mode = 'normals'
         # window.render_mode = 'wireframe'
-        # window.icon  = 'icon.png'
         # window.fullscreen = True
         window.borderless = False
         window.exit_button.visible = False
@@ -102,9 +102,36 @@ class App(Ursina):
         self.menu.on_click = Func(setattr, self.menu, 'enabled', False)
 
     def setup_controls(self) -> None:
+        # Run button:
+        self.run_button = Button(position=(-0.75, 0.28),
+            text='Run',
+            color = color.gray,
+            pressed_color = color.green,
+            parent = camera.ui,
+            eternal=True,
+            scale = 0.05,
+            )
+        self.run_button.text_entity.scale = 0.8
+        self.run_button.on_click = self.set_run_code
+        self.run_button.tooltip = Tooltip('Run Student Code')
+
+        # Clear button:
+        self.clear_button = Button(position=(-0.75, 0.2),
+            text='Clear',
+            color = color.gray,
+            pressed_color = color.green,
+            parent = camera.ui,
+            eternal=True,
+            scale = 0.05,
+            )
+        self.clear_button.text_entity.scale = 0.8
+        self.clear_button.on_click = self.clear_objects
+        self.clear_button.tooltip = Tooltip('Clear the world')
+
+        # Camera button:
         self.view_button = ButtonGroup(('2D', '3D'),
             min_selection = 1,
-            x = -0.8, y = 0.2,
+            x = -0.8, y = 0.13,
             default='3D',
             selected_color=color.green,
             parent = camera.ui,
@@ -129,7 +156,12 @@ class App(Ursina):
         self.speed_slider.on_value_changed = self.handle_speed
 
     def init_prompt(self) -> None:
-        Text(TITLE, position=window.center + Vec2(-0.14, 0.48), scale = 2, parent = camera.ui)
+        Text(TITLE,
+            position=window.center + Vec2(-0.14, 0.48),
+            scale = 2,
+            parent = camera.ui,
+            eternal=True,
+            )
         self.prompt = Text(f'Position : {vec2tup(self.karel.position)}; Direction: {self.karel.facing_to()}',
         position = window.center + Vec2(-0.36, -0.43),
         scale = 1,
@@ -162,6 +194,21 @@ class App(Ursina):
             self.texture_name  = self.TEXTURE_NAMES[int(key)-1]
         self.block_texture = self.textures[self.texture_name]
 
+    def set_run_code(self):
+        self.run_code = True
+        self.run_button.disabled = True
+
+    def clear_objects(self):
+        to_destroy = [e for e in scene.entities \
+            if e.name == 'voxel' or e.name == 'paint' \
+            or e.name == 'beeper']
+        for d in to_destroy:
+            try:
+                destroy(d)
+            except Exception as e:
+                print('failed to destroy entity', e)
+        self.karel.init_karel_params()
+
     def input(self, key) -> None:
         if key == 'w' or key == 'a' or key == 's' or key == 'd' \
           or key == 'arrow_up' or key == 'arrow_down' \
@@ -179,24 +226,18 @@ class App(Ursina):
             self.wait_time += 0.05
         elif key.isdigit() and '1' <= key <= '7':
              self.set_texture(key)
-        elif key == 'r': # reset
-            self.karel.init_position()
-            self.update_prompt('Initial State')
         elif key == 'page_down':
             self.set_3d()
         elif key == 'page_up':
             self.set_2d()
-        elif key == 'e': # entities  experimental
-            for e in scene.entities:
-                print(e.name)
-                if e.name == 'voxel':
-                    destroy(e)
+        elif key == 'r': # run student code
+            self.set_run_code()
+        elif key == 'c': # clear
+            self.clear_objects()
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
-
         super().input(key)
-
 
 
     def karel_action_decorator(
@@ -213,7 +254,6 @@ class App(Ursina):
             # delay by specified amount
             sleep(self.wait_time)
         return wrapper
-
 
     def corner_action_decorator(
         self, karel_fn: Callable[..., None]
@@ -294,18 +334,38 @@ class App(Ursina):
         debug_txt = Text(text=text, position=position, origin=origin, scale=scale, color=color.red)
         destroy(debug_txt, delay=duration)
 
-    def run_program(self) -> None:
+    def run_student_code(self) -> None:
+        window.title = 'Running ' + self.student_code.module_name + '.py'
+        base.win.requestProperties(window)
         try:
            self.student_code.mod.main()
-        except Exception as e:
+        except KarelException as e:
             self.update_prompt(e.action, e.message)
-        finally:
+        except Exception as e:
+            print(e)
+        except SystemExit: # ignore traceback on exit
+            pass
+        self.run_button.disabled = False
+
+
+    def run_program(self) -> None:
+        self.run_student_code()
+        try:
             # Update the title
             window.title = self.student_code.module_name + \
                 ' : Manual mode - Use WASD or Arrow keys to control agent'
             window.center_on_screen()
             base.win.requestProperties(window)
-            self.run() # run the app for wasd/arrows exploration
+            # self.run() # run the app for wasd/arrows exploration
+                         # not run() does not return, thus, use step() instead
+            while True:
+                taskMgr.step()
+                if self.run_code:
+                    self.run_student_code()
+                    self.run_code = False
+        except SystemExit: # ignore traceback on exit
+            pass
+
 
 
     def finalizeExit(self):
@@ -314,7 +374,7 @@ class App(Ursina):
         """
         base.graphicsEngine.removeAllWindows()
         if self.win is not None:
-            print("Closing window, bye!")
+            print("Closing window and app, bye!")
             self.closeWindow(self.win)
             self.win = None
         self.destroy()
