@@ -18,6 +18,8 @@ i.e. Karel, doing actions and performing decisions in a small sandbox constructi
 Sample screenshots:
 
 ### Karel Building Blocks around the Perimeter of the world
+
+![](https://github.com/melvincabatuan/KarelCraft/blob/master/screenshots/KarelCraft1.PNG)
 ![](https://github.com/melvincabatuan/KarelCraft/blob/master/screenshots/KarelCraft3.PNG)
 
 * Source: test_karel.py
