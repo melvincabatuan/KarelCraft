@@ -66,7 +66,8 @@ class World(Entity):
 
     def add_voxel(self, position, texture) -> None:
         voxel = Voxel(position = position, texture  = texture)
-        voxel.tooltip = Tooltip(f'Block@{vec2tup(position)}: texture')
+        texture_name = texture.name.split('.')[0]
+        voxel.tooltip = Tooltip(f'Block@{vec2tup(position)}: {texture_name}')
         self.voxels[tuple(position)] = voxel
 
     def remove_voxel(self, position) -> None:

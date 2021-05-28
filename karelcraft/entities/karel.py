@@ -193,7 +193,7 @@ class Karel(Button):
         self.world.add_voxel(self.item_position(), texture)
 
     def block_present(self) -> bool:
-        return self.world.voxels.get(tuple(self.item_position()), False)
+        return bool(self.world.voxels.get(tuple(self.item_position()), 0))
         # hit_info = self.intersects()
         # if hit_info.hit:
         #     return hit_info.entity.type == 'Voxel'
@@ -204,10 +204,10 @@ class Karel(Button):
 
     def destroy_block(self) -> None:
         if self.block_present():
-            self.world.remove_voxel(tuple(self.position))
+            self.world.remove_voxel(tuple(self.item_position()))
         else:
             raise KarelException(
-                self.position,
+                self.item_position(),
                 self.facing_to(),
                 'destroy_block()',
                 "ERROR: Karel attempted to destroy_block(), but it does not exist!",
@@ -215,7 +215,7 @@ class Karel(Button):
 
     def remove_paint(self) -> None:
         if self.color_present():
-            self.world.remove_color(tuple(self.position))
+            self.world.remove_color(tuple(self.item_position()))
         else:
             raise KarelException(
                 self.position,

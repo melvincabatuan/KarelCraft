@@ -109,9 +109,9 @@ class App(Ursina):
             pressed_color = color.green,
             parent = camera.ui,
             eternal=True,
-            scale = 0.06,
+            scale = 0.062,
             )
-        self.run_button.text_entity.scale = 0.8
+        self.run_button.text_entity.scale = 0.7
         self.run_button.on_click = self.set_run_code
         self.run_button.tooltip = Tooltip('Run Student Code')
 
@@ -122,9 +122,9 @@ class App(Ursina):
             pressed_color = color.green,
             parent = camera.ui,
             eternal=True,
-            scale = 0.06,
+            scale = 0.062,
             )
-        self.clear_button.text_entity.scale = 0.8
+        self.clear_button.text_entity.scale = 0.7
         self.clear_button.on_click = self.clear_objects
         self.clear_button.tooltip = Tooltip('Clear the world')
 
