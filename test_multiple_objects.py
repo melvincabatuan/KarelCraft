@@ -1,17 +1,8 @@
 from karelcraft.karelcraft import *
 import random
 
-def get_color():
-  '''
-  Returns a random color
-  '''
-  colors = ["red","black","cyan","white", \
-    "smoke", "green", "light_gray", "magenta", \
-    "orange", "pink",  "blue","yellow", "lime", \
-    "turquoise", "azure", "violet", "brown", \
-    "olive", "peach", "gold", "salmon"
-    ]
-  return random.choice(colors)
+# MODE = 'beeper'
+MODE = 'block'
 
 def turn_around():
     turn_left()
@@ -23,14 +14,44 @@ def turn_right():
     turn_left()
 
 def main():
-  move()
-  for _ in range(10):
-    put_beeper()
+  num_items = 5
+  while front_is_clear():
+    for _ in range(num_items):
+      if MODE == 'block':
+        put_block()
+      else:
+        put_beeper()
+    move()
 
-  for _ in range(10):
+  # fencepost
+  for _ in range(num_items):
+    if MODE == 'block':
+      put_block()
+    else:
+      put_beeper()
+
+  turn_around()
+
+  while front_is_clear():
+    for _ in range(num_items):
+      if MODE == 'block':
+        destroy_block()
+      else:
+        pick_beeper()
+    move()
+
+  for _ in range(num_items):
+    if MODE == 'block':
+      destroy_block()
+    else:
+      pick_beeper()
+
+  # Should give an exception
+  if MODE == 'block':
+    destroy_block()
+  else:
     pick_beeper()
 
-  pick_beeper()
 
 
 

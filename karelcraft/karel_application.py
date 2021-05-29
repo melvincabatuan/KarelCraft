@@ -115,18 +115,18 @@ class App(Ursina):
         self.run_button.on_click = self.set_run_code
         self.run_button.tooltip = Tooltip('Run Student Code')
 
-        # Clear button:
-        self.clear_button = Button(position=(-0.75, 0.2),
-            text='Clear',
+        # Reset button:
+        self.reset_button = Button(position=(-0.75, 0.2),
+            text='Reset',
             color = color.gray,
             pressed_color = color.green,
             parent = camera.ui,
             eternal=True,
             scale = 0.062,
             )
-        self.clear_button.text_entity.scale = 0.7
-        self.clear_button.on_click = self.clear_objects
-        self.clear_button.tooltip = Tooltip('Clear the world')
+        self.reset_button.text_entity.scale = 0.7
+        self.reset_button.on_click = self.clear_objects
+        self.reset_button.tooltip = Tooltip('Reset the world')
 
         # Camera button:
         self.view_button = ButtonGroup(('2D', '3D'),
@@ -170,8 +170,10 @@ class App(Ursina):
         )
 
     def update_prompt(self, agent_action, error_message = None) -> None:
+        position = self.karel.position
+        position.z = abs(position.z) # correct Ursina coordinate (-) at top
         msg =  f'''           \t {agent_action}
-        \t Position @ {vec2tup(self.karel.position)} ==> {self.karel.facing_to()}
+        \t Position @ {vec2tup(position)} ==> {self.karel.facing_to()}
         '''
         self.prompt.color = color.white
         if error_message:
@@ -235,6 +237,7 @@ class App(Ursina):
             self.set_run_code()
         elif key == 'c': # clear
             self.clear_objects()
+            # self.karel.world.clear_objects()
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
@@ -366,6 +369,8 @@ class App(Ursina):
                     self.run_code = False
         except SystemExit: # ignore traceback on exit
             pass
+        except Exception as e:
+            print(e)
 
 
 
@@ -375,7 +380,7 @@ class App(Ursina):
         """
         base.graphicsEngine.removeAllWindows()
         if self.win is not None:
-            print("Closing window and app, bye!")
+            print("Exiting app, bye!")
             self.closeWindow(self.win)
             self.win = None
         self.destroy()

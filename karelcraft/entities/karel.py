@@ -14,11 +14,11 @@ class Karel(Button):
     def __init__(self) -> None:
         super().__init__(
         parent   = scene,
-        color    = color.white,
+        color    = color.white66,
         model    = 'assets/block', #'sphere',
         texture  = 'assets/karel_block',
         rotation = Vec3(90,90,90),
-        scale = 0.55,
+        scale = 0.52,
         )
         self.directions = {'a': Vec3(WEST),  'd': Vec3(EAST), \
                            'w': Vec3(NORTH), 's': Vec3(SOUTH), \
@@ -27,11 +27,11 @@ class Karel(Button):
         self.init_karel_params()
 
     def init_karel_params(self) -> None:
-        self.position  = Vec3(0, 0,-0.5)
+        self.world     = World(MAP_SIZE)
+        self.position  = Vec3(self.world.GROUND_POSITION)
         self.direction = Vec3(EAST)
         self.face2direction()
         self.num_beepers = INIT_BEEPERS
-        self.world      = World(MAP_SIZE)
 
     def setup_collider(self) -> None:
         axis = BoxCollider(self,
@@ -47,6 +47,7 @@ class Karel(Button):
         self.direction = self.directions[key]
         self.face2direction()
         self.position += self.direction
+        self.position = self.world.top_position(self.position) # depth
         return self.world.is_inside(self.position)
 
     def move(self) -> None:
@@ -58,6 +59,7 @@ class Karel(Button):
                 "ERROR: Karel attempted to move(), but its front was not clear!",
             )
         self.position += self.direction
+        self.position = self.world.top_position(self.position) # depth
 
     def facing_east(self) -> bool:
         return self.direction == Vec3(EAST)
@@ -97,6 +99,7 @@ class Karel(Button):
     def turn_left(self) -> None:
         self.direction = Vec3(NEXT_NWSE[tuple(self.direction)])
         self.face2direction()
+        self.position = self.world.top_position(self.position) # depth
 
     def direction_is_clear(self, direction) -> bool:
         new_position = self.position + direction
@@ -131,8 +134,14 @@ class Karel(Button):
         if self.num_beepers != INFINITY:
             self.num_beepers -= 1
 
-        beeper_pos = Vec3(self.position.x, self.position.y, self.Z_OFFSET)
-        return self.world.add_beeper(beeper_pos)
+        key = vec2tup(self.position)[:2]
+        idx_in_stack = len(self.world.beepers.get(key,[]))
+        self.position = Vec3(self.position.x, self.position.y,-idx_in_stack*self.world.beeper_offset_z - 0.5)
+
+        num_in_stack = idx_in_stack + 1
+        beeper_pos = Vec3(self.position.x, self.position.y, self.position.z + 0.5)
+        self.world.add_beeper(beeper_pos, num_in_stack)
+        return num_in_stack
 
     def pick_beeper(self) -> int:
         if self.no_beeper_present():
@@ -145,7 +154,9 @@ class Karel(Button):
         if self.num_beepers != INFINITY:
             self.num_beepers += 1
 
-        return self.world.remove_beeper(self.position)
+        beepers_in_stack = self.world.remove_beeper(self.position)
+        self.position = self.world.top_position(self.position)
+        return beepers_in_stack
 
     def beeper_present(self) -> bool:
         key = vec2tup(self.position)[:2]
@@ -190,10 +201,17 @@ class Karel(Button):
         return not self.color_present()
 
     def put_block(self, texture) -> None:
-        self.world.add_voxel(self.item_position(), texture)
+        # self.world.add_voxel(self.item_position(), texture)
+        key = vec2tup(self.position)[:2]
+        idx_in_stack = len(self.world.voxels.get(key,[]))
+        self.position = Vec3(self.position.x, self.position.y,-idx_in_stack*self.world.voxel_offset_z - 0.5)
+        block_pos = Vec3(self.position.x, self.position.y, self.position.z + 0.5)
+        self.world.add_voxel(block_pos, texture)
+        return idx_in_stack + 1
 
     def block_present(self) -> bool:
-        return bool(self.world.voxels.get(tuple(self.item_position()), 0))
+        key = vec2tup(self.position)[:2]
+        return bool(len(self.world.voxels.get(key, [])))
         # hit_info = self.intersects()
         # if hit_info.hit:
         #     return hit_info.entity.type == 'Voxel'
@@ -205,6 +223,7 @@ class Karel(Button):
     def destroy_block(self) -> None:
         if self.block_present():
             self.world.remove_voxel(tuple(self.item_position()))
+            self.position = self.world.top_position(self.position)
         else:
             raise KarelException(
                 self.item_position(),
