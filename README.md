@@ -501,7 +501,7 @@ if __name__ == "__main__":
 ```
 
 
-### Karel creating an 3d pyramid pattern:
+### Karel creating a 3d pyramid pattern:
 
 ![](https://github.com/melvincabatuan/KarelCraft/blob/master/screenshots/KarelCraft1.PNG)
 
