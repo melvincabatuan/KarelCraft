@@ -262,10 +262,10 @@ class App(Ursina):
     def corner_action_decorator(
         self, karel_fn: Callable[..., None]
         ) -> Callable[..., None]:
-        def wrapper(key: str) -> None:
+        def wrapper(color: str) -> None:
             # execute Karel function
-            karel_fn(key)
-            agent_action =  karel_fn.__name__+f'("{key}")'
+            karel_fn(color)
+            agent_action =  karel_fn.__name__+f'("{color}")'
             # show prompt to user
             self.update_prompt(agent_action)
             # manual step Panda3D loop
@@ -292,7 +292,10 @@ class App(Ursina):
     def block_action_decorator(
         self, karel_fn: Callable[..., None]
         ) -> Callable[..., None]:
-        def wrapper() -> None:
+        def wrapper(block_texture: str) -> None:
+            #set texture if given
+            if block_texture:
+                self.block_texture = self.textures[block_texture]
             # execute Karel function
             karel_fn(self.block_texture) # send texture to Karel
             agent_action = karel_fn.__name__+'() => ' + self.texture_name

@@ -30,7 +30,7 @@ def turn_left() -> None:
 def put_beeper() -> None:
     pass
 
-def put_block() -> None:
+def put_block(block_texture: str) -> None:
     pass
 
 def destroy_block() -> None:
@@ -114,10 +114,10 @@ def remove_paint() -> None:
 def corner_color_is(color: str) -> bool:
     pass
 
-def color_present(self) -> bool:
+def color_present() -> bool:
     pass
 
-def no_color_present(self) -> bool:
+def no_color_present() -> bool:
     pass
 
 
