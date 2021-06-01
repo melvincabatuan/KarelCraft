@@ -2,7 +2,7 @@
 
 Karel + 'MineCraft' - like environment enabled by Ursina Engine (Panda3D) 
 
-![](https://github.com/melvincabatuan/KarelCraft/blob/master/screenshots/KarelCraft14.PNG)
+![](https://github.com/melvincabatuan/KarelCraft/blob/master/screenshots/KarelCraft13.PNG)
 
 "Karel the Robot", an educational programming language for beginners (Pattis, 1970),
 remain useful for learners in programming and computational thinking. In it's most 
