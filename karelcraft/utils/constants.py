@@ -1,11 +1,11 @@
 TITLE = "KarelCraft"
 
 # Map
-MAP_SIZE = 18
+MAP_SIZE = 30
 WORLD_OFFSET = (0.5, 0.5, -0.01) # corrects world_position
 
 # Karel
-WAIT_TIME = 0.2
+WAIT_TIME = 0 # 0.2
 INFINITY  = -1
 INIT_BEEPERS = INFINITY
 

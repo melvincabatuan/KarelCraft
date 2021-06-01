@@ -1,7 +1,9 @@
 from karelcraft.karelcraft import *
 import random
 
-TEXTURES = ('grass','stone','brick','dirt','lava', 'rose', 'dlsu')
+TEXTURES = ('grass','stone','brick','dirt','lava', 'rose', \
+          'dlsu', 'diamond', 'emerald', 'gold', 'obsidian', \
+          'leaves', 'sand', 'wood', 'stonebrick', 'sponge', 'snow')
 
 def turn_around():
     turn_left()

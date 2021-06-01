@@ -42,6 +42,7 @@ class App(Ursina):
         EditorCamera(rotation_speed = 100 )
         self.set_3d()
         self.setup_textures()
+        self.setup_sound()
         self.setup_lights()
         self.setup_window()
         self.init_prompt()
@@ -73,9 +74,22 @@ class App(Ursina):
             'lava'  : load_texture('assets/lava_block.png'),
             'rose'  : load_texture('assets/rose_block.png'),
             'dlsu'  : load_texture('assets/dlsu_block.png'),
+         'diamond'  : load_texture('assets/diamond_block.png'),
+         'emerald'  : load_texture('assets/emerald_block.png'),
+         'gold'     : load_texture('assets/gold_block.png'),
+         'obsidian' : load_texture('assets/obsidian_block.png'),
+         'leaves'   : load_texture('assets/leaves_block.png'),
+         'sand'     : load_texture('assets/sand_block.png'),
+         'wood'     : load_texture('assets/wood_block.png'),
+     'stonebrick'   : load_texture('assets/stonebrick_block.png'),
+         'sponge'   : load_texture('assets/sponge_block.png'),
+         'snow'     : load_texture('assets/snow_block.png'),
         }
         self.texture_name = 'grass'      # default
         self.block_texture = self.textures[self.texture_name]
+
+    def setup_sound(self):
+        self.move_sound = Audio('assets/move.mp3', autoplay = False) # loop = True,
 
     def setup_lights(self) -> None:
         Light(type='ambient', color=(0.6, 0.6, 0.6, 1))
@@ -221,13 +235,14 @@ class App(Ursina):
                 self.update_prompt('\tmove()')
             else:
                 self.update_prompt('move()', '\t   ERROR: Current location is forbidden!')
+            self.move_sound.play()
         elif key == '=':
             print("Make faster...")
             self.wait_time -= 0.05
         elif key == '-':
             print("Make slower...")
             self.wait_time += 0.05
-        elif key.isdigit() and '1' <= key <= '7':
+        elif key.isdigit() and '1' <= key <= '8':
              self.set_texture(key)
         elif key == 'page_down':
             self.set_3d()
@@ -253,6 +268,8 @@ class App(Ursina):
             agent_action = karel_fn.__name__+'()'
             # show prompt to user
             self.update_prompt('\t' + agent_action)
+            # action sound
+            self.move_sound.play()
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
@@ -345,7 +362,8 @@ class App(Ursina):
         window.title = 'Running ' + self.student_code.module_name + '.py'
         base.win.requestProperties(window)
         try:
-           self.student_code.mod.main()
+            self.move_sound.play()
+            self.student_code.mod.main()
         except KarelException as e:
             self.update_prompt(e.action, e.message)
         except Exception as e:

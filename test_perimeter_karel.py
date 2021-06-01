@@ -17,7 +17,7 @@ def main():
     """ Your code goes here! """
     while front_is_clear():
         if mode == Mode.block:
-            put_block()
+            put_block('grass')
         elif mode == Mode.beeper:
             put_beeper()
         elif mode == Mode.paint:
