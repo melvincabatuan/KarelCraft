@@ -2,16 +2,13 @@ from ursina import *
 import importlib.util
 from pathlib import Path
 
-from karelcraft.utils.helpers import vec2tup
-from karelcraft.utils.constants import MAP_SIZE, NWSE_MAP, NEXT_NWSE,\
-            NEXT_NWSE_CCW, INIT_BEEPERS, NORTH, SOUTH, EAST, WEST, INFINITY
+from karelcraft.utils.helpers import vec2tup, INFINITY, KarelException
+from karelcraft.utils.direction import Direction
 from karelcraft.entities.world import World
 
 class Karel(Button):
 
-    Z_OFFSET = 0
-
-    def __init__(self) -> None:
+    def __init__(self, world_file: str) -> None:
         super().__init__(
         parent   = scene,
         color    = color.white66,
@@ -20,35 +17,38 @@ class Karel(Button):
         rotation = Vec3(90,90,90),
         scale = 0.52,
         )
-        self.directions = {'a': Vec3(WEST),  'd': Vec3(EAST), \
-                           'w': Vec3(NORTH), 's': Vec3(SOUTH), \
-            'arrow_up': Vec3(NORTH), 'arrow_down': Vec3(SOUTH), \
-          'arrow_left': Vec3(WEST), 'arrow_right': Vec3(EAST)}
-        self.init_karel_params()
+        self.directions = {'a': Direction.WEST,
+                           'd': Direction.EAST,
+                           'w': Direction.NORTH,
+                           's': Direction.SOUTH,
+                    'arrow_up': Direction.NORTH,
+                  'arrow_down': Direction.SOUTH,
+                  'arrow_left': Direction.WEST,
+                 'arrow_right': Direction.EAST,
+                 }
+        self.world_file = world_file
+        self.init_params()
 
-    def init_karel_params(self) -> None:
-        self.world     = World(MAP_SIZE)
-        self.position  = Vec3(self.world.GROUND_POSITION)
-        self.direction = Vec3(EAST)
+    def init_params(self):
+        self.world     = World(self.world_file)
+        self.position  = Vec3(self.world.loader.start_location + (-0.5,))
+        self.direction = self.world.loader.start_direction
         self.face2direction()
-        self.num_beepers = INIT_BEEPERS
-
-    def setup_collider(self) -> None:
-        axis = BoxCollider(self,
-            size=self.scale * Vec3(0.1, 0.1, 10),
-            )
-        axis.show()
-        self.collider = axis
+        self.num_beepers = self.world.loader.start_beeper_count
 
     def facing_to(self) -> str:
-        return NWSE_MAP[tuple(self.direction)]
+        return self.direction.name
 
-    def user_move(self, key) -> bool:
-        self.direction = self.directions[key]
-        self.face2direction()
-        self.position += self.direction
-        self.position = self.world.top_position(self.position) # depth
-        return self.world.is_inside(self.position)
+    def user_action(self, key) -> tuple:
+        if self.direction != self.directions[key]:
+            self.direction = self.directions[key]
+            self.face2direction()
+            return ('turn_left()', self.world.is_inside(self.position))
+        else:
+            is_valid_move = self.direction_is_clear(self.direction)
+            self.position += self.direction.value
+            self.position = self.world.top_position(self.position)
+            return ('move()', is_valid_move)
 
     def move(self) -> None:
         if self.front_is_blocked():
@@ -58,52 +58,57 @@ class Karel(Button):
                 'move()',
                 "ERROR: Karel attempted to move(), but its front was not clear!",
             )
-        self.position += self.direction
+        self.position += self.direction.value
         self.position = self.world.top_position(self.position) # depth
 
     def facing_east(self) -> bool:
-        return self.direction == Vec3(EAST)
+        return self.direction.name == 'EAST'
 
     def not_facing_east(self) -> bool:
         return not self.facing_east()
 
     def facing_north(self) -> bool:
-        return self.direction == Vec3(NORTH)
+        return self.direction.name == 'NORTH'
 
     def not_facing_north(self) -> bool:
         return not facing_north()
 
     def facing_west(self) -> bool:
-        return self.direction == Vec3(WEST)
+        return self.direction.name == 'WEST'
 
     def not_facing_west(self) -> bool:
         return not self.facing_west()
 
     def facing_south(self) -> bool:
-        return self.direction == Vec3(SOUTH)
+        return self.direction.name == 'SOUTH'
 
     def not_facing_south(self) -> bool:
         return not self.facing_south()
 
     def face2direction(self) -> None:
-        if self.direction == Vec3(SOUTH):
+        if self.direction.name == 'SOUTH':
             self.rotation_x = 180
-        elif self.direction == Vec3(NORTH):
-            self.rotation_x = 0
-        elif self.direction == Vec3(WEST):
+        elif self.direction.name == 'NORTH':
+            self.rotation_x = 360
+        elif self.direction.name == 'WEST':
             self.rotation_x = 270
-        else:
+        else: # 'EAST'
             self.rotation_x = 90
+        # while Direction.angle(self.direction) != Direction.angle(new_direction):
+        #     self.rotation_x -= 90
+        #     self.direction = Direction.rotate90(self.direction)
 
 
     def turn_left(self) -> None:
-        self.direction = Vec3(NEXT_NWSE[tuple(self.direction)])
+        self.direction = Direction.rotate90(self.direction)
         self.face2direction()
         self.position = self.world.top_position(self.position) # depth
 
     def direction_is_clear(self, direction) -> bool:
-        new_position = self.position + direction
-        return self.world.is_inside(new_position)
+        is_wall = self.world.wall_exists(self.position, direction)
+        new_position = self.position + direction.value
+        is_wall += self.world.wall_exists(new_position, Direction.opposite(direction))
+        return self.world.is_inside(new_position) and not is_wall
 
     def front_is_clear(self) -> bool:
         return self.direction_is_clear(self.direction)
@@ -112,13 +117,13 @@ class Karel(Button):
         return not self.front_is_clear()
 
     def left_is_clear(self) -> bool:
-        return self.direction_is_clear(Vec3(NEXT_NWSE[tuple(self.direction)]))
+        return self.direction_is_clear(Direction.rotate90(self.direction))
 
     def left_is_blocked(self) -> bool:
         return not self.left_is_clear()
 
     def right_is_clear(self) -> bool:
-        return self.direction_is_clear(Vec3(NEXT_NWSE_CCW[tuple(self.direction)]))
+        return self.direction_is_clear(Direction.rotate90(self.direction, 'counterclockwise'))
 
     def right_is_blocked(self) -> bool:
         return not self.right_is_clear()
@@ -133,15 +138,10 @@ class Karel(Button):
             )
         if self.num_beepers != INFINITY:
             self.num_beepers -= 1
-
         key = vec2tup(self.position)[:2]
-        idx_in_stack = len(self.world.beepers.get(key,[]))
-        self.position = Vec3(self.position.x, self.position.y,-idx_in_stack*self.world.beeper_offset_z - 0.5)
-
-        num_in_stack = idx_in_stack + 1
-        beeper_pos = Vec3(self.position.x, self.position.y, self.position.z + 0.5)
-        self.world.add_beeper(beeper_pos, num_in_stack)
-        return num_in_stack
+        self.world.add_beeper(key)
+        self.position = self.world.top_position(self.position)
+        return len(self.world.beepers.get(key,[]))
 
     def pick_beeper(self) -> int:
         if self.no_beeper_present():
@@ -161,10 +161,6 @@ class Karel(Button):
     def beeper_present(self) -> bool:
         key = vec2tup(self.position)[:2]
         return len(self.world.beepers.get(key, []))
-        # hit_info = self.intersects() # Ursina collider presents inconsistent results
-        # if hit_info.hit:
-        #     return hit_info.entity.type == 'Beeper'
-        # return False
 
     def beepers_present(self) -> bool:
         return self.beeper_present()
@@ -182,7 +178,7 @@ class Karel(Button):
         return self.num_beepers == 0
 
     def item_position(self):
-        return Vec3(self.position.x, self.position.y, self.Z_OFFSET)
+        return Vec3(self.position.x, self.position.y, 0)
 
     def paint_corner(self, key: str) -> None:
         self.world.paint_corner(self.item_position(), key)
@@ -192,16 +188,11 @@ class Karel(Button):
 
     def color_present(self) -> bool:
         return self.world.paints.get(tuple(self.item_position()), False)
-        # hit_info = self.intersects()
-        # if hit_info.hit:
-        #     return hit_info.entity.type == 'ColorPaint'
-        # return False
 
     def no_color_present(self) -> bool:
         return not self.color_present()
 
     def put_block(self, texture) -> None:
-        # self.world.add_voxel(self.item_position(), texture)
         key = vec2tup(self.position)[:2]
         idx_in_stack = len(self.world.voxels.get(key,[]))
         self.position = Vec3(self.position.x, self.position.y,-idx_in_stack*self.world.voxel_offset_z - 0.5)
@@ -212,10 +203,6 @@ class Karel(Button):
     def block_present(self) -> bool:
         key = vec2tup(self.position)[:2]
         return bool(len(self.world.voxels.get(key, [])))
-        # hit_info = self.intersects()
-        # if hit_info.hit:
-        #     return hit_info.entity.type == 'Voxel'
-        # return False
 
     def no_block_present(self) -> bool:
         return not self.block_present()
@@ -330,20 +317,3 @@ class StudentCode:
         for func in functions_to_override:
             setattr(self.mod, func, getattr(karel, func))
 
-
-class KarelException(Exception):
-    def __init__(self, position: tuple,
-        direction: str,
-        action: str,
-        message: str) -> None:
-        super().__init__()
-        self.position  = position
-        self.direction = direction
-        self.action    = action
-        self.message   = message
-
-    def __str__(self) -> str:
-        return (
-            f"Karel crashed while on position {self.position}, "
-            f"facing {self.direction}\nInvalid action: {self.message}"
-        )

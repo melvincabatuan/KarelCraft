@@ -1,6 +1,10 @@
 from karelcraft.karelcraft import *
 import random
 
+TEXTURES = ('grass','stone','brick','dirt','lava', 'rose', \
+          'dlsu', 'diamond', 'emerald', 'gold', 'obsidian', \
+          'leaves', 'sand', 'wood', 'stonebrick', 'sponge', 'snow')
+
 def get_color():
   '''
   Returns a random color
@@ -35,7 +39,8 @@ def put_color_line(n):
   Put colors to a n squares in a row
   '''
   for _ in range(n):
-    put_block()
+    texture = random.choice(TEXTURES)
+    put_block(texture)
     # paint_corner(get_color())
     # put_beeper()
     move()
@@ -61,13 +66,15 @@ def pyramid():
   width = 1
   while front_is_clear():
     # paint_corner(get_color())
-    put_block()
+    texture = random.choice(TEXTURES)
+    put_block(texture)
     # put_beeper()
     move()
     width += 1
 
   # paint_corner(get_color())
-  put_block()
+  texture = random.choice(TEXTURES)
+  put_block(texture)
   # put_beeper()
   turn_around()
   go_to_wall()

@@ -1,8 +1,8 @@
 from karelcraft.karelcraft import *
 import random
 
-# MODE = 'beeper'
-MODE = 'block'
+MODE = 'beeper'
+# MODE = 'block'
 
 def turn_around():
     turn_left()

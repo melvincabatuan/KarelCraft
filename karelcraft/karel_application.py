@@ -2,7 +2,7 @@
 This file is the main object running the KarelCraft application.
 
 Author : Melvin Cabatuan
-Credits: pokepetter (Ursina)
+ThanksTo: pokepetter (Ursina)
          Nicholas Bowman, Kylie Jue, Tyler Yep (stanfordkarel module)
          clear-code-projects (Minecraft-in-Python)
          StanislavPetrovV
@@ -20,23 +20,26 @@ from typing import Callable
 from ursina import *
 
 from karelcraft.entities.world import World
-from karelcraft.entities.karel import Karel, StudentCode, KarelException
+from karelcraft.entities.karel import Karel, StudentCode
 from karelcraft.entities.voxel import Voxel
 from karelcraft.entities.cog_menu import CogMenu
-from karelcraft.utils.constants import TITLE, MAP_SIZE, WAIT_TIME
-from karelcraft.utils.helpers import vec2tup
+from karelcraft.utils.helpers import vec2tup, KarelException
+
+TITLE = "KarelCraft"
+TEXTURE_NAMES = ('grass','stone','brick','dirt','lava', 'rose', \
+      'dlsu', 'diamond', 'emerald', 'gold', 'obsidian', \
+      'leaves', 'sand', 'wood', 'stonebrick', 'sponge', 'snow')
+
 
 class App(Ursina):
 
-    TEXTURE_NAMES = ('grass','stone','brick','dirt','lava', 'rose', 'dlsu')
-
     def __init__(self,
         code_file: Path,
-        development_mode=True,
+        world_file: str,
+        development_mode=False,
         ) -> None:
         super().__init__()
-        self.karel = Karel()
-        self.wait_time  = WAIT_TIME    # Wait per step
+        self.karel = Karel(world_file.split('.')[0]) # remove extension
         self.setup_code(code_file)
         self.run_code = False
         EditorCamera(rotation_speed = 100 )
@@ -85,7 +88,7 @@ class App(Ursina):
          'sponge'   : load_texture('assets/sponge_block.png'),
          'snow'     : load_texture('assets/snow_block.png'),
         }
-        self.texture_name = 'grass'      # default
+        self.texture_name = TEXTURE_NAMES[0]     # default
         self.block_texture = self.textures[self.texture_name]
 
     def setup_sound(self):
@@ -102,7 +105,7 @@ class App(Ursina):
             self.set_2d()
 
     def handle_speed(self) -> None:
-        self.wait_time = 1 - self.speed_slider.value
+        self.karel.world.speed = self.speed_slider.value
 
     def setup_menu(self) -> None:
         window.cog_menu.enabled = False
@@ -139,7 +142,7 @@ class App(Ursina):
             scale = 0.062,
             )
         self.reset_button.text_entity.scale = 0.7
-        self.reset_button.on_click = self.clear_objects
+        self.reset_button.on_click = self.reset
         self.reset_button.tooltip = Tooltip('Reset the world')
 
         # Camera button:
@@ -156,7 +159,7 @@ class App(Ursina):
 
         # Slider
         self.speed_slider = ThinSlider(0.0, 1.0,
-            default = 1 - WAIT_TIME,
+            default = self.karel.world.speed,
             step = 0.02,
             text='Speed',
             dynamic=True,
@@ -196,26 +199,28 @@ class App(Ursina):
         self.prompt.text = msg
 
     def set_3d(self) -> None:
-        camera.position = (MAP_SIZE // 2, -1.5*MAP_SIZE, -1.4*MAP_SIZE)
+        span = self.karel.world.scale.x
+        camera.position = (span // 2, -1.5*span, -1.4*span)
         camera.rotation_x = -55
 
     def set_2d(self) -> None:
         camera.rotation_x = 0
-        camera.position   = (MAP_SIZE // 2, MAP_SIZE // 2, -3*MAP_SIZE)
+        span = self.karel.world.scale.x
+        camera.position   = (span // 2, span // 2, -3*span)
 
     def set_texture(self, key=None) -> None:
         if key is None:
             key = random.randint(1,5)
-            self.texture_name  = self.TEXTURE_NAMES[key-1]
+            self.texture_name  = TEXTURE_NAMES[key-1]
         else:
-            self.texture_name  = self.TEXTURE_NAMES[int(key)-1]
+            self.texture_name  = TEXTURE_NAMES[int(key)-1]
         self.block_texture = self.textures[self.texture_name]
 
     def set_run_code(self):
         self.run_code = True
         self.run_button.disabled = True
 
-    def clear_objects(self):
+    def reset(self):
         to_destroy = [e for e in scene.entities \
             if e.name == 'voxel' or e.name == 'paint' \
             or e.name == 'beeper']
@@ -224,24 +229,29 @@ class App(Ursina):
                 destroy(d)
             except Exception as e:
                 print('failed to destroy entity', e)
-        self.karel.init_karel_params()
+        self.karel.init_params()
+        self.karel.world.speed = self.speed_slider.value
 
     def input(self, key) -> None:
         if key == 'w' or key == 'a' or key == 's' or key == 'd' \
           or key == 'arrow_up' or key == 'arrow_down' \
           or key == 'arrow_left' or key == 'arrow_right':
             # Manual Movement
-            if self.karel.user_move(key):
-                self.update_prompt('\tmove()')
-            else:
-                self.update_prompt('move()', '\t   ERROR: Current location is forbidden!')
+            action, is_valid = self.karel.user_action(key)
+            msg    = '\tturn_left()'
+            error_msg = ''
+            if action == 'move()':
+                msg    = '\tmove()'
+            if not is_valid:
+                error_msg = '\t\t  ERROR: Invalid move()!'
+            self.update_prompt(msg, error_msg)
             self.move_sound.play()
         elif key == '=':
             print("Make faster...")
-            self.wait_time -= 0.05
+            self.karel.world.speed = min(self.karel.world.speed + 0.05, 1.0)
         elif key == '-':
             print("Make slower...")
-            self.wait_time += 0.05
+            self.karel.world.speed = max(self.karel.world.speed - 0.05, 0.0)
         elif key.isdigit() and '1' <= key <= '8':
              self.set_texture(key)
         elif key == 'page_down':
@@ -251,8 +261,8 @@ class App(Ursina):
         elif key == 'r': # run student code
             self.set_run_code()
         elif key == 'c': # clear
-            self.clear_objects()
-            # self.karel.world.clear_objects()
+            # self.clear_objects()
+            self.karel.world.clear_objects()
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
@@ -273,7 +283,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(self.wait_time)
+            sleep(1 - self.karel.world.speed)
         return wrapper
 
     def corner_action_decorator(
@@ -288,7 +298,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(self.wait_time)
+            sleep(1 - self.karel.world.speed)
         return wrapper
 
     def beeper_action_decorator(
@@ -303,16 +313,15 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(self.wait_time)
+            sleep(1 - self.karel.world.speed)
         return wrapper
 
     def block_action_decorator(
         self, karel_fn: Callable[..., None]
         ) -> Callable[..., None]:
-        def wrapper(block_texture: str) -> None:
+        def wrapper(block_texture: str = TEXTURE_NAMES[0]) -> None:
             #set texture if given
-            if block_texture:
-                self.block_texture = self.textures[block_texture]
+            self.block_texture = self.textures[block_texture]
             # execute Karel function
             karel_fn(self.block_texture) # send texture to Karel
             agent_action = karel_fn.__name__+'() => ' + self.texture_name
@@ -321,7 +330,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(self.wait_time)
+            sleep(1 - self.karel.world.speed)
         return wrapper
 
     def inject_decorator_namespace(self) -> None:
@@ -360,7 +369,7 @@ class App(Ursina):
 
     def run_student_code(self) -> None:
         window.title = 'Running ' + self.student_code.module_name + '.py'
-        base.win.requestProperties(window)
+        # base.win.requestProperties(window)
         try:
             self.move_sound.play()
             self.student_code.mod.main()
@@ -374,7 +383,6 @@ class App(Ursina):
 
 
     def run_program(self) -> None:
-        self.run_student_code()
         try:
             # Update the title
             window.title = self.student_code.module_name + \

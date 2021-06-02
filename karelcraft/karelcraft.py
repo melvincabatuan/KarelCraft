@@ -5,7 +5,7 @@ for a KarelCraft program. It must include the following:
 from karelcraft.karelcraft import *
 
 Author : Melvin Cabatuan
-Credits: pokepetter (Ursina)
+ThanksTo: pokepetter (Ursina)
          Nicholas Bowman, Kylie Jue, Tyler Yep (stanfordkarel module)
          clear-code-projects (Minecraft-in-Python)
          StanislavPetrovV
@@ -123,5 +123,5 @@ def no_color_present() -> bool:
 
 def run_karel_program(world_file: str = "") -> None:
     student_filename = Path(sys.argv[0])
-    app = App(student_filename)
+    app = App(student_filename, world_file)
     app.run_program()
