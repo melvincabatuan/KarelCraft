@@ -23,13 +23,11 @@ from karelcraft.entities.world import World
 from karelcraft.entities.karel import Karel, StudentCode
 from karelcraft.entities.voxel import Voxel
 from karelcraft.entities.cog_menu import CogMenu
+from karelcraft.entities.dropdown_menu import DropdownMenu, DropdownMenuButton
 from karelcraft.utils.helpers import vec2tup, KarelException
+from karelcraft.utils.texture_loader import TextureLoader
 
 TITLE = "KarelCraft"
-TEXTURE_NAMES = ('grass','stone','brick','dirt','lava', 'rose', \
-      'dlsu', 'diamond', 'emerald', 'gold', 'obsidian', \
-      'leaves', 'sand', 'wood', 'stonebrick', 'sponge', 'snow')
-
 
 class App(Ursina):
 
@@ -40,17 +38,23 @@ class App(Ursina):
         ) -> None:
         super().__init__()
         self.karel = Karel(world_file.split('.')[0]) # remove extension
-        self.setup_code(code_file)
+        self.code_file = code_file
+        self.setup_code()
         self.run_code = False
-        EditorCamera(rotation_speed = 100 )
+        self.setup_controls()
+        EditorCamera(rotation_speed = 100)
         self.set_3d()
-        self.setup_textures()
-        self.setup_sound()
-        self.setup_lights()
+        self.setup_texture()
+        self.setup_sound_lights()
         self.setup_window()
         self.init_prompt()
-        self.setup_controls()
         self.setup_menu()
+
+    def setup_texture(self):
+        self.texture_loader = TextureLoader()
+        self.textures = self.texture_loader.textures
+        self.texture_name = self.texture_loader.random_texture()
+        self.block_texture = self.textures.get(self.texture_name, 'grass')
 
     def setup_window(self) -> None:
         window.title = TITLE
@@ -63,38 +67,13 @@ class App(Ursina):
         window.exit_button.visible = False
         window.fps_counter.enabled = False
 
-    def setup_code(self, code_file) -> None:
-        self.student_code = StudentCode(code_file)
+    def setup_code(self) -> None:
+        self.student_code = StudentCode(self.code_file)
         self.student_code.inject_namespace(self.karel)
         self.inject_decorator_namespace()
 
-    def setup_textures(self) -> None:
-        self.textures = {
-            'grass' : load_texture('assets/grass_block.png'),
-            'stone' : load_texture('assets/stone_block.png'),
-            'brick' : load_texture('assets/brick_block.png'),
-            'dirt'  : load_texture('assets/dirt_block.png'),
-            'lava'  : load_texture('assets/lava_block.png'),
-            'rose'  : load_texture('assets/rose_block.png'),
-            'dlsu'  : load_texture('assets/dlsu_block.png'),
-         'diamond'  : load_texture('assets/diamond_block.png'),
-         'emerald'  : load_texture('assets/emerald_block.png'),
-         'gold'     : load_texture('assets/gold_block.png'),
-         'obsidian' : load_texture('assets/obsidian_block.png'),
-         'leaves'   : load_texture('assets/leaves_block.png'),
-         'sand'     : load_texture('assets/sand_block.png'),
-         'wood'     : load_texture('assets/wood_block.png'),
-     'stonebrick'   : load_texture('assets/stonebrick_block.png'),
-         'sponge'   : load_texture('assets/sponge_block.png'),
-         'snow'     : load_texture('assets/snow_block.png'),
-        }
-        self.texture_name = TEXTURE_NAMES[0]     # default
-        self.block_texture = self.textures[self.texture_name]
-
-    def setup_sound(self):
+    def setup_sound_lights(self):
         self.move_sound = Audio('assets/move.mp3', autoplay = False) # loop = True,
-
-    def setup_lights(self) -> None:
         Light(type='ambient', color=(0.6, 0.6, 0.6, 1))
         Light(type='directional', color=(0.6, 0.6, 0.6, 1), direction=(1, 1, 1))
 
@@ -117,6 +96,7 @@ class App(Ursina):
         'Camera 2D View <gray>[Page Down]<default>' : self.set_2d,
         })
         self.menu.on_click = Func(setattr, self.menu, 'enabled', False)
+        self.menu.eternal = True
 
     def setup_controls(self) -> None:
         # Run button:
@@ -173,6 +153,19 @@ class App(Ursina):
         self.speed_slider.knob.color = color.green
         self.speed_slider.on_value_changed = self.handle_speed
 
+        # World selector
+        button_list = []
+        for w in self.karel.world.world_list:
+            drop_button = DropdownMenuButton(w)
+            drop_button.on_click = lambda w=w: self.load_world(w)
+            button_list.append(drop_button)
+
+        world_dropdown = DropdownMenu('Load World',
+            buttons=tuple(button_list),
+            position=(0.52,0.48),
+            eternal=True,
+        )
+
     def init_prompt(self) -> None:
         Text(TITLE,
             position=window.center + Vec2(-0.14, 0.48),
@@ -199,21 +192,27 @@ class App(Ursina):
         self.prompt.text = msg
 
     def set_3d(self) -> None:
-        span = self.karel.world.scale.x
-        camera.position = (span // 2, -1.5*span, -1.4*span)
+        span = self.karel.world.get_maxside()
+        x_center, y_center = self.karel.world.get_center()
+        y_pos = min(-1.6*span, -12.7)
+        z_pos = min(-1.4*span, -12)
+        camera.position = (x_center, y_pos, z_pos)
         camera.rotation_x = -55
+        self.view_button.select(self.view_button.buttons[1])
 
     def set_2d(self) -> None:
         camera.rotation_x = 0
-        span = self.karel.world.scale.x
-        camera.position   = (span // 2, span // 2, -3*span)
+        span = self.karel.world.get_maxside()
+        z_pos = min(-3*span, -10)
+        x_center, y_center = self.karel.world.get_center()
+        camera.position = (x_center, y_center, z_pos)
+        self.view_button.select(self.view_button.buttons[0])
 
     def set_texture(self, key=None) -> None:
         if key is None:
-            key = random.randint(1,5)
-            self.texture_name  = TEXTURE_NAMES[key-1]
+            self.texture_name  = self.texture_loader.random_texture()
         else:
-            self.texture_name  = TEXTURE_NAMES[int(key)-1]
+            self.texture_name  = self.texture_loader.texture_names[int(key)-1]
         self.block_texture = self.textures[self.texture_name]
 
     def set_run_code(self):
@@ -232,7 +231,27 @@ class App(Ursina):
         self.karel.init_params()
         self.karel.world.speed = self.speed_slider.value
 
+    def load_world(self, world_file):
+        to_destroy = [e for e in scene.entities \
+            if e.name == 'voxel' or e.name == 'paint' \
+            or e.name == 'beeper' or e.name == 'wall' \
+            or e.name == 'karel' or e.name == 'world']
+        for d in to_destroy:
+            try:
+                destroy(d)
+            except Exception as e:
+                print('failed to destroy entity', e)
+        del self.karel
+        self.karel = Karel(world_file)
+        self.setup_code()
+        self.karel.init_params()
+        self.karel.world.speed = self.speed_slider.value
+        self.set_3d()
+        msg = f'Position : {vec2tup(self.karel.position)}; Direction: {self.karel.facing_to()}'
+        self.update_prompt(msg)
+
     def input(self, key) -> None:
+        # print('camera.position =', camera.position) # Debug Camera
         if key == 'w' or key == 'a' or key == 's' or key == 'd' \
           or key == 'arrow_up' or key == 'arrow_down' \
           or key == 'arrow_left' or key == 'arrow_right':
@@ -252,7 +271,7 @@ class App(Ursina):
         elif key == '-':
             print("Make slower...")
             self.karel.world.speed = max(self.karel.world.speed - 0.05, 0.0)
-        elif key.isdigit() and '1' <= key <= '8':
+        elif key.isdigit() and '1' <= key <= '9':
              self.set_texture(key)
         elif key == 'page_down':
             self.set_3d()
@@ -267,7 +286,6 @@ class App(Ursina):
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
         super().input(key)
-
 
     def karel_action_decorator(
         self, karel_fn: Callable[..., None]
@@ -289,7 +307,7 @@ class App(Ursina):
     def corner_action_decorator(
         self, karel_fn: Callable[..., None]
         ) -> Callable[..., None]:
-        def wrapper(color: str) -> None:
+        def wrapper(color: str = color.random_color()) -> None:
             # execute Karel function
             karel_fn(color)
             agent_action =  karel_fn.__name__+f'("{color}")'
@@ -319,7 +337,7 @@ class App(Ursina):
     def block_action_decorator(
         self, karel_fn: Callable[..., None]
         ) -> Callable[..., None]:
-        def wrapper(block_texture: str = TEXTURE_NAMES[0]) -> None:
+        def wrapper(block_texture: str = 'grass') -> None:
             #set texture if given
             self.block_texture = self.textures[block_texture]
             # execute Karel function
@@ -381,8 +399,8 @@ class App(Ursina):
             pass
         self.run_button.disabled = False
 
-
     def run_program(self) -> None:
+        print('Entered runniong...')
         try:
             # Update the title
             window.title = self.student_code.module_name + \
@@ -400,8 +418,6 @@ class App(Ursina):
             pass
         except Exception as e:
             print(e)
-
-
 
     def finalizeExit(self):
         """

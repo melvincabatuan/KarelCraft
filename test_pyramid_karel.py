@@ -10,11 +10,12 @@ def get_color():
   Returns a random color
   '''
   colors = ["red","black","cyan","white", \
-    "smoke", "green", "light_gray", "magenta", \
+    "smoke", "green", "light_gray", "gray", \
+    "dark_gray", "black", "magenta", \
     "orange", "pink",  "blue","yellow", "lime", \
     "turquoise", "azure", "violet", "brown", \
     "olive", "peach", "gold", "salmon"
-    ]
+  ]
   return random.choice(colors)
 
 def turn_around():
@@ -34,9 +35,9 @@ def go_to_wall():
   while front_is_clear():
     move()
 
-def put_color_line(n):
+def put_line(n):
   '''
-  Put colors to a n squares in a row
+  Put objects to a n squares in a row
   '''
   for _ in range(n):
     texture = random.choice(TEXTURES)
@@ -72,7 +73,7 @@ def pyramid():
     move()
     width += 1
 
-  # paint_corner(get_color())
+  paint_corner(get_color())
   texture = random.choice(TEXTURES)
   put_block(texture)
   # put_beeper()
@@ -85,7 +86,7 @@ def pyramid():
     go_to_next_step(step)
 
     width -= 2
-    put_color_line(width)
+    put_line(width)
     turn_around()
     go_to_wall()
     step += 1

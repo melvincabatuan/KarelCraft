@@ -27,11 +27,19 @@ KEYWORD_DELIM = ":"
 PARAM_DELIM = ";"
 DEFAULT_WORLD_FILE = "default_world.w"
 
+COLOR_LIST = ["red","black","cyan","white", \
+    "smoke", "green", "light_gray", "gray", \
+    "dark_gray", "black", "magenta", \
+    "orange", "pink",  "blue","yellow", "lime", \
+    "turquoise", "azure", "violet", "brown", \
+    "olive", "peach", "gold", "salmon"
+]
+
 
 class WorldLoader:
     def __init__(self, world_file: str  = "") -> None:
         """
-        Karel World constructor
+        WorldLoader constructor
         Parameters:
             world_file: filename containing the initial state of Karel's world
         """
@@ -66,14 +74,12 @@ class WorldLoader:
             self.load_from_file()
 
 
-    @staticmethod
-    def process_world(world_file: str) -> Path:
+    def process_world(self, world_file: str) -> Path:
         """
         If no world_file is provided, use default world.
-        Find world file that matches program name in the current worlds/ directory.
-        If not found, search the provided default worlds directory.
         """
         default_worlds_path = Path(__file__).absolute().parent.parent / "worlds"
+        self.available_worlds = [world.stem for world in default_worlds_path.glob("*.w")]
         if not world_file:
             default_world = default_worlds_path / DEFAULT_WORLD_FILE
             if default_world.is_file():
@@ -81,7 +87,6 @@ class WorldLoader:
                 return default_world
             raise FileNotFoundError(
                 f"Default world cannot be found in: {default_worlds_path}\n"
-                "Please raise an issue on the stanfordkarel GitHub."
             )
 
         world_filepath = Path(world_file)
@@ -99,13 +104,11 @@ class WorldLoader:
             print("Could not find worlds/ folder in current directory.\n")
 
         sys.tracebacklimit = 0
-        available_worlds = "\n".join(
-            [f"  {world.stem}" for world in default_worlds_path.glob("*.w")]
-        )
+        available_worlds_str = "\n".join(self.available_worlds)
         raise FileNotFoundError(
             "The specified file was not one of the provided worlds.\n"
             "Please store custom worlds in a folder named worlds/, "
-            f"or use a world listed below:\n{available_worlds}"
+            f"or use a world listed below:\n{available_worlds_str}"
             "\nPass the default world as a parameter in run_karel_program().\n"
             "    e.g. run_karel_program('checkerboard_karel')"
         )
@@ -121,31 +124,26 @@ class WorldLoader:
             # check to see if parameter encodes a location
             coordinate = re.match(r"\((\d+),\s*(\d+)\)", param)
             if coordinate:
-                # avenue, street
+                # col, row
                 params["location"] = int(coordinate.group(1)), int(coordinate.group(2))
                 continue
 
-            # check to see if the parameter is a direction value
             if param.upper() in (d.name for d in Direction):
                 params["direction"] = Direction[param.upper()]
 
-            # check to see if parameter encodes a numerical value or color string
             elif keyword == "color":
-                if param.title() not in COLOR_MAP:
+                if param not in COLOR_LIST:
                     raise ValueError(
                         f"Error: {param} is invalid parameter for {keyword}."
-                    )
-                params["color"] = param.title()
+                )
+                params["color"] = param
 
-            # handle the edge case where Karel has infinite beepers
             elif param in ("infinity", "infinite") and keyword == "beeperbag":
                 params["val"] = INFINITY
 
-            # float values are only valid for the speed parameter.
             elif keyword == "speed":
                 params["val"] = float(param) if param.isnumeric() else INIT_SPEED
 
-            # must be a digit then
             elif param.isdigit():
                 params["val"] = int(param)
 
@@ -156,7 +154,6 @@ class WorldLoader:
     def load_from_file(self) -> None:
         with open(self.world_file) as f:
             for i, line in enumerate(f):
-                # Ignore blank lines and lines with no comma delineator
                 line = line.strip()
                 if not line:
                     continue
@@ -166,43 +163,32 @@ class WorldLoader:
                     continue
 
                 keyword, param_str = line.lower().split(KEYWORD_DELIM)
-
-                # only accept valid keywords as defined in world file spec
-                # TODO: add error detection for keywords with insufficient parameters
                 params = self.parse_parameters(keyword, param_str)
 
-                # handle all different possible keyword cases
                 if keyword == "dimension":
-                    # set world dimensions based on location values
                     self.columns, self.rows = params["location"]
 
                 elif keyword == "wall":
-                    # build a wall at the specified location
-                    (avenue, street), direction = (
+                    (col, row), direction = (
                         params["location"],
                         params["direction"],
                     )
-                    self.walls.add(Wall(avenue, street, direction))
+                    self.walls.add(Wall(col, row, direction))
 
                 elif keyword == "beeper":
-                    # add the specified number of beepers to the world
                     self.beepers[params["location"]] += params["val"]
 
                 elif keyword == "karel":
-                    # Give Karel initial state values
                     self.start_location = params["location"]
                     self.start_direction = params["direction"]
 
                 elif keyword == "beeperbag":
-                    # Set Karel's initial beeper bag count
                     self.start_beeper_count = params["val"]
 
                 elif keyword == "speed":
-                    # Set delay speed of program execution
                     self.init_speed = params["val"]
 
                 elif keyword == "color":
-                    # Set corner color to be specified color
                     self.corner_colors[params["location"]] = params["color"]
 
                 else:
@@ -210,22 +196,22 @@ class WorldLoader:
 
 
 
-    @staticmethod
-    def get_alt_wall(wall: Wall) -> Wall:
-        if wall.direction == Direction.NORTH:
-            return Wall(wall.avenue, wall.street + 1, Direction.SOUTH)
-        if wall.direction == Direction.SOUTH:
-            return Wall(wall.avenue, wall.street - 1, Direction.NORTH)
-        if wall.direction == Direction.EAST:
-            return Wall(wall.avenue + 1, wall.street, Direction.WEST)
-        if wall.direction == Direction.WEST:
-            return Wall(wall.avenue - 1, wall.street, Direction.EAST)
-        raise ValueError
+    # @staticmethod
+    # def get_alt_wall(wall: Wall) -> Wall:
+    #     if wall.direction == Direction.NORTH:
+    #         return Wall(wall.avenue, wall.street + 1, Direction.SOUTH)
+    #     if wall.direction == Direction.SOUTH:
+    #         return Wall(wall.avenue, wall.street - 1, Direction.NORTH)
+    #     if wall.direction == Direction.EAST:
+    #         return Wall(wall.avenue + 1, wall.street, Direction.WEST)
+    #     if wall.direction == Direction.WEST:
+    #         return Wall(wall.avenue - 1, wall.street, Direction.EAST)
+    #     raise ValueError
 
-    def add_wall(self, wall: Wall) -> None:
-        alt_wall = self.get_alt_wall(wall)
-        if wall not in self.walls and alt_wall not in self.walls:
-            self.walls.add(wall)
+    # def add_wall(self, wall: Wall) -> None:
+    #     alt_wall = self.get_alt_wall(wall)
+    #     if wall not in self.walls and alt_wall not in self.walls:
+    #         self.walls.add(wall)
 
     # def remove_wall(self, wall: Wall) -> None:
     #     alt_wall = self.get_alt_wall(wall)

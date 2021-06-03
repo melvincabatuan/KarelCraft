@@ -25,4 +25,5 @@ def main():
   turn_left()
 
 if __name__ == "__main__":
+    # run_karel_program('1x1')
   run_karel_program('collect_newspaper_karel')

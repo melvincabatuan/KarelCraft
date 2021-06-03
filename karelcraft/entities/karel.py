@@ -15,7 +15,7 @@ class Karel(Button):
         model    = 'assets/block', #'sphere',
         texture  = 'assets/karel_block',
         rotation = Vec3(90,90,90),
-        scale = 0.52,
+        scale = 0.48,
         )
         self.directions = {'a': Direction.WEST,
                            'd': Direction.EAST,
@@ -180,8 +180,8 @@ class Karel(Button):
     def item_position(self):
         return Vec3(self.position.x, self.position.y, 0)
 
-    def paint_corner(self, key: str) -> None:
-        self.world.paint_corner(self.item_position(), key)
+    def paint_corner(self, color_str: str) -> None:
+        self.world.paint_corner(self.item_position(), color_str)
 
     def corner_color_is(self, color: str) -> bool:
         return self.world.corner_color(self.item_position()) == color

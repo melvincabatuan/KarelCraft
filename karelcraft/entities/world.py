@@ -26,12 +26,14 @@ class World(Entity):
         self.voxel_offset_z  = 1
         self.beeper_position_z = self.beeper_offset_z
         self.speed =  self.loader.init_speed
+        self.world_list = self.loader.available_worlds
 
         self.paints  : dict[tuple[int, int], Paint]  = defaultdict(None)
         self.voxels  : dict[tuple[int, int], list]   = defaultdict(list)
         self.beepers : dict[tuple[int, int], list]   = defaultdict(list)
         self.load_beepers()
         self.load_walls()
+        self.load_paints()
 
     def position_correction(self):
         '''
@@ -41,7 +43,7 @@ class World(Entity):
         self.world_position -= Vec3((0.5, 0.5, -0.01))
 
     def create_grid(self, height = -0.001):
-        Entity(model = Grid(self.loader.columns, self.loader.rows, thickness=1.5),
+        Entity(model = Grid(self.loader.columns, self.loader.rows, thickness=1.8),
             scale = 1,
             position = (self.origin.x, self.origin.y, height),
             color = color.white,
@@ -58,9 +60,14 @@ class World(Entity):
             wall_pos = Vec3(w.col, w.row, -1)
             wall_object = Wall(position = wall_pos, direction = w.direction)
 
-    def paint_corner(self, position, key) -> None:
-        paint = Paint(position, key)
-        paint.tooltip = Tooltip(f'Paint@{vec2tup(position)}: {key}')
+    def load_paints(self) -> None:
+        for key, paint in self.loader.corner_colors.items():
+            paint_pos = Vec3(key[0], key[1], 0)
+            self.paint_corner(paint_pos, paint)
+
+    def paint_corner(self, position, color_str) -> None:
+        paint = Paint(position, color_str)
+        paint.tooltip = Tooltip(f'Paint@{vec2tup(position)}: {color_str}')
         self.paints[vec2tup(position)] = paint
 
     def corner_color(self, position) -> str:
@@ -123,10 +130,17 @@ class World(Entity):
         for block in blocks_to_destroy:
             destroy(block)
 
-
     def wall_exists(self, position, direction) -> bool:
         key = vec2tup(position)[:2]
         for w in self.loader.walls:
             if (w.col, w.row, w.direction) == (key[0], key[1], direction):
                 return True
         return False
+
+    def get_center(self) -> tuple:
+        x_center = self.scale.x // 2 if self.scale.x%2 else self.scale.x // 2 - 0.5
+        y_center = self.scale.y // 2 if self.scale.y%2 else self.scale.y // 2 - 0.5
+        return (x_center, y_center)
+
+    def get_maxside(self) -> int:
+        return max(self.scale.x, self.scale.y)
