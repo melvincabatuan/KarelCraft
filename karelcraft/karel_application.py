@@ -10,6 +10,16 @@ License: MIT
 Version: 1.0.0
 Date of Creation: 5/17/2021
 """
+from ursina import *
+
+from karelcraft.entities.world import World
+from karelcraft.entities.karel import Karel
+from karelcraft.entities.voxel import Voxel
+from karelcraft.entities.cog_menu import CogMenu
+from karelcraft.entities.dropdown_menu import DropdownMenu, DropdownMenuButton
+from karelcraft.utils.helpers import vec2tup, KarelException
+from karelcraft.utils.texture_loader import TextureLoader
+from karelcraft.utils.student_code import StudentCode
 
 import sys
 import webbrowser
@@ -17,15 +27,6 @@ import random
 from pathlib import Path
 from time import sleep
 from typing import Callable
-from ursina import *
-
-from karelcraft.entities.world import World
-from karelcraft.entities.karel import Karel, StudentCode
-from karelcraft.entities.voxel import Voxel
-from karelcraft.entities.cog_menu import CogMenu
-from karelcraft.entities.dropdown_menu import DropdownMenu, DropdownMenuButton
-from karelcraft.utils.helpers import vec2tup, KarelException
-from karelcraft.utils.texture_loader import TextureLoader
 
 TITLE = "KarelCraft"
 
@@ -80,7 +81,7 @@ class App(Ursina):
     def handle_view(self) -> None:
         if self.view_button.value[0] == '3D':
             self.set_3d()
-        if self.view_button.value[0] == '2D':
+        else:
             self.set_2d()
 
     def handle_speed(self) -> None:
@@ -100,26 +101,45 @@ class App(Ursina):
 
     def setup_controls(self) -> None:
         # Run button:
-        self.run_button = Button(position=(-0.75, 0.28),
+        self.run_button = Button(
+            model = 'circle',
+            position=(-0.75, 0.36),
             text='Run',
             color = color.gray,
             pressed_color = color.green,
             parent = camera.ui,
             eternal=True,
-            scale = 0.062,
+            scale = 0.064,
             )
         self.run_button.text_entity.scale = 0.7
         self.run_button.on_click = self.set_run_code
         self.run_button.tooltip = Tooltip('Run Student Code')
 
-        # Reset button:
-        self.reset_button = Button(position=(-0.75, 0.2),
-            text='Reset',
+        # Stop button:
+        self.stop_button = Button(
+            model = 'circle',
+            position=(-0.75, 0.28),
+            text='Stop',
             color = color.gray,
-            pressed_color = color.green,
+            pressed_color = color.red,
             parent = camera.ui,
             eternal=True,
-            scale = 0.062,
+            scale = 0.064,
+            )
+        self.stop_button.text_entity.scale = 0.7
+        self.stop_button.on_click = self.stop_code
+        self.stop_button.tooltip = Tooltip('Stop Student Code')
+
+        # Reset button:
+        self.reset_button = Button(
+            model = 'circle',
+            position=(-0.75, 0.20),
+            text='Reset',
+            color = color.gray,
+            pressed_color = color.yellow,
+            parent = camera.ui,
+            eternal=True,
+            scale = 0.064,
             )
         self.reset_button.text_entity.scale = 0.7
         self.reset_button.on_click = self.reset
@@ -219,6 +239,10 @@ class App(Ursina):
         self.run_code = True
         self.run_button.disabled = True
 
+    def stop_code(self):
+        self.run_code = False
+        self.stop_button.disabled = True
+
     def reset(self):
         to_destroy = [e for e in scene.entities \
             if e.name == 'voxel' or e.name == 'paint' \
@@ -251,7 +275,6 @@ class App(Ursina):
         self.update_prompt(msg)
 
     def input(self, key) -> None:
-        # print('camera.position =', camera.position) # Debug Camera
         if key == 'w' or key == 'a' or key == 's' or key == 'd' \
           or key == 'arrow_up' or key == 'arrow_down' \
           or key == 'arrow_left' or key == 'arrow_right':
@@ -291,6 +314,8 @@ class App(Ursina):
         self, karel_fn: Callable[..., None]
         ) -> Callable[..., None]:
         def wrapper() -> None:
+            if not self.run_code:
+                sys.exit()
             # execute Karel function
             karel_fn()
             agent_action = karel_fn.__name__+'()'
@@ -388,6 +413,7 @@ class App(Ursina):
     def run_student_code(self) -> None:
         window.title = 'Running ' + self.student_code.module_name + '.py'
         # base.win.requestProperties(window)
+        self.stop_button.disabled = False
         try:
             self.move_sound.play()
             self.student_code.mod.main()
@@ -400,7 +426,6 @@ class App(Ursina):
         self.run_button.disabled = False
 
     def run_program(self) -> None:
-        print('Entered runniong...')
         try:
             # Update the title
             window.title = self.student_code.module_name + \
@@ -419,13 +444,13 @@ class App(Ursina):
         except Exception as e:
             print(e)
 
-    def finalizeExit(self):
+    def finalizeExit(self) -> None:
         """
         Called by `userExit()` to quit the application.
         """
         base.graphicsEngine.removeAllWindows()
         if self.win is not None:
-            print("Exiting app, bye!")
+            print("Exiting KarelCraft app, bye!")
             self.closeWindow(self.win)
             self.win = None
         self.destroy()

@@ -13,7 +13,7 @@ class Wall(NamedTuple):
     row: int
     direction: Direction
 
-INIT_SPEED = 0.75
+INIT_SPEED = 0.80
 VALID_WORLD_KEYWORDS = [
     "dimension",
     "wall",
@@ -142,8 +142,11 @@ class WorldLoader:
                 params["val"] = INFINITY
 
             elif keyword == "speed":
-                params["val"] = float(param) if param.isnumeric() else INIT_SPEED
-
+                try:
+                    params["val"] = float(param)
+                except ValueError as e:
+                    params["val"] = INIT_SPEED
+                    print(f"Error: {param} is an invalid parameter for {keyword}. Using default.")
             elif param.isdigit():
                 params["val"] = int(param)
 

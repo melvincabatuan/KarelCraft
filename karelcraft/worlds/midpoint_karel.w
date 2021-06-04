@@ -1,4 +1,4 @@
 Dimension: (5, 5)
-Beeper: (3, 1); 1
-Karel: (3, 1); west
+Beeper: (2, 0); 1
+Karel: (2, 0); west
 BeeperBag: INFINITY

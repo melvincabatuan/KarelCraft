@@ -1,5 +1,5 @@
 Dimension: (5, 5)
-Beeper: (3, 1); 1
-Beeper: (3, 5); 1
-Karel: (3, 5); east
+Beeper: (2, 0); 1
+Beeper: (2, 4); 1
+Karel: (2, 4); east
 BeeperBag: INFINITY
