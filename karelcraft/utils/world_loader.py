@@ -198,7 +198,6 @@ class WorldLoader:
                     print(f"Invalid keyword - ignoring line {i} of world file: {line}")
 
 
-
     # @staticmethod
     # def get_alt_wall(wall: Wall) -> Wall:
     #     if wall.direction == Direction.NORTH:

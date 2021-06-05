@@ -36,5 +36,5 @@ Wall: (12, 5); West
 Wall: (12, 5); South
 BeeperBag: INFINITE
 Karel: (0, 0); East
-Speed: 0.4
+Speed: 0.8
 

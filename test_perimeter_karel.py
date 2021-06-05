@@ -9,8 +9,8 @@ class Mode(Enum):
     paint  = 3
 
 # Set the item to put in corner
-# mode = Mode.beeper
-mode = Mode.paint
+mode = Mode.beeper
+# mode = Mode.paint
 # mode = Mode.block
 
 def main():

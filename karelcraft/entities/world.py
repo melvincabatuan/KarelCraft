@@ -147,7 +147,7 @@ class World(Entity):
                 return top.position + Vec3(0,0, self.GROUND_OFFSET - self.VOXEL_OFFSET_Z)
             if top.name == 'beeper' or top.name == 'paint':
                 return top.position + Vec3(0,0, self.GROUND_OFFSET - self.BEEPER_OFFSET_Z)
-        return Vec3(position.x, position.y, self.GROUND_OFFSET)
+        return Vec3(position[0], position[1], self.GROUND_OFFSET)
 
     def wall_exists(self, position, direction) -> bool:
         key = vec2tup(position)[:2]
@@ -169,34 +169,3 @@ class World(Entity):
 
     def get_num_blocks(self, position) -> int:
         return sum(isinstance(v, Voxel) for v in self.stacks.get(vec2key(position), []))
-
-    # def save_to_file(self, filename: Path) -> None:
-    #     with open(filename, "w") as f:
-    #         f.write(f"Dimension: ({self.loader.columns}, {self.loader.rows})\n")
-    #         for wall in sorted(self.walls):
-    #             f.write(
-    #                 f"Wall: ({wall.avenue}, {wall.street}); {wall.direction.value}\n"
-    #             )
-
-    #         # Next, output all beepers
-    #         for loc, count in sorted(self.beepers.items()):
-    #             f.write(f"Beeper: ({loc[0]}, {loc[1]}); {count}\n")
-
-    #         # Next, output all color information
-    #         for loc, color in sorted(self.corner_colors.items()):
-    #             if color:
-    #                 f.write(f"Color: ({loc[0]}, {loc[1]}); {color}\n")
-
-    #         # Next, output Karel information
-    #         f.write(
-    #             f"Karel: {self.karel_start_location}; "
-    #             f"{self.karel_start_direction.value}\n"
-    #         )
-
-    #         # Finally, output beeperbag info
-    #         beeper_output = (
-    #             self.karel_start_beeper_count
-    #             if self.karel_start_beeper_count >= 0
-    #             else "INFINITY"
-    #         )
-    #         f.write(f"BeeperBag: {beeper_output}\n")

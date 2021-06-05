@@ -1,3 +1,9 @@
+'''
+This creates a 3D pyramid pattern of blocks.
+@author: MKC
+'''
+
+
 from karelcraft.karelcraft import *
 import random
 

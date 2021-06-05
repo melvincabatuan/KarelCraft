@@ -1,3 +1,8 @@
+'''
+Classic stonemason problem
+@MKC
+'''
+
 from karelcraft.karelcraft import *
 
 def turn_right():
@@ -44,7 +49,6 @@ def main():
 
   # Fencepost
   install_beepers()
-  go_back_to_ground()
 
 
 if __name__ == "__main__":

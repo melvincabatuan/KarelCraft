@@ -38,24 +38,23 @@ class App(Ursina):
         # development_mode=False,
         ) -> None:
         super().__init__()
-        self.karel = Karel(world_file.split('.')[0]) # remove extension
+        # Note: Creating Karel needs Ursina import (render)
+        self.karel = Karel(world_file.split('.')[0])
+        self.world = self.karel.world
         self.code_file = code_file
-        self.setup_code()
-        self.run_code = False
-        self.setup_controls()
-        EditorCamera(rotation_speed = 100)
-        self.set_3d()
-        self.setup_texture()
-        self.setup_sound_lights()
         self.setup_window()
+        self.setup_code()
+        self.setup_controls()
         self.init_prompt()
         self.setup_menu()
+        self.setup_texture()
+        self.setup_sound_lights_cam()
 
     def setup_texture(self):
         self.texture_loader = TextureLoader()
-        self.textures = self.texture_loader.textures
-        self.texture_name = self.texture_loader.random_texture()
-        self.block_texture = self.textures.get(self.texture_name, 'grass')
+        self.textures       = self.texture_loader.textures
+        self.texture_name   = self.texture_loader.random_texture()
+        self.block_texture  = self.textures.get(self.texture_name, 'grass')
 
     def setup_window(self) -> None:
         window.title = TITLE
@@ -72,11 +71,14 @@ class App(Ursina):
         self.student_code = StudentCode(self.code_file)
         self.student_code.inject_namespace(self.karel)
         self.inject_decorator_namespace()
+        self.run_code = False
 
-    def setup_sound_lights(self):
+    def setup_sound_lights_cam(self):
         self.move_sound = Audio('assets/move.mp3', autoplay = False) # loop = True,
         Light(type='ambient', color=(0.6, 0.6, 0.6, 1))
         Light(type='directional', color=(0.6, 0.6, 0.6, 1), direction=(1, 1, 1))
+        EditorCamera(rotation_speed = 25) # lessen angle adjustment
+        self.set_3d()
 
     def handle_view(self) -> None:
         if self.view_button.value[0] == '3D':
@@ -85,7 +87,7 @@ class App(Ursina):
             self.set_2d()
 
     def handle_speed(self) -> None:
-        self.karel.world.speed = self.speed_slider.value
+        self.world.speed = self.speed_slider.value
 
     def setup_menu(self) -> None:
         window.cog_menu.enabled = False
@@ -159,7 +161,7 @@ class App(Ursina):
 
         # Slider
         self.speed_slider = ThinSlider(0.0, 1.0,
-            default = self.karel.world.speed,
+            default = self.world.speed,
             step = 0.02,
             text='Speed',
             dynamic=True,
@@ -175,7 +177,7 @@ class App(Ursina):
 
         # World selector
         button_list = []
-        for w in self.karel.world.world_list:
+        for w in self.world.world_list:
             drop_button = DropdownMenuButton(w)
             drop_button.on_click = lambda w=w: self.load_world(w)
             button_list.append(drop_button)
@@ -212,8 +214,8 @@ class App(Ursina):
         self.prompt.text = msg
 
     def set_3d(self) -> None:
-        span = self.karel.world.get_maxside()
-        x_center, y_center = self.karel.world.get_center()
+        span = self.world.get_maxside()
+        x_center, y_center = self.world.get_center()
         y_pos = min(-1.6*span, -12.7)
         z_pos = min(-1.4*span, -12)
         camera.position = (x_center, y_pos, z_pos)
@@ -222,9 +224,9 @@ class App(Ursina):
 
     def set_2d(self) -> None:
         camera.rotation_x = 0
-        span = self.karel.world.get_maxside()
+        span = self.world.get_maxside()
         z_pos = min(-3*span, -10)
-        x_center, y_center = self.karel.world.get_center()
+        x_center, y_center = self.world.get_center()
         camera.position = (x_center, y_center, z_pos)
         self.view_button.select(self.view_button.buttons[0])
 
@@ -235,15 +237,15 @@ class App(Ursina):
             self.texture_name  = self.texture_loader.texture_names[int(key)-1]
         self.block_texture = self.textures[self.texture_name]
 
-    def set_run_code(self):
+    def set_run_code(self) -> None:
         self.run_code = True
         self.run_button.disabled = True
 
-    def stop_code(self):
+    def stop_code(self)  -> None:
         self.run_code = False
         self.stop_button.disabled = True
 
-    def reset(self):
+    def reset(self)  -> None:
         to_destroy = [e for e in scene.entities \
             if e.name == 'voxel' or e.name == 'paint' \
             or e.name == 'beeper']
@@ -253,9 +255,9 @@ class App(Ursina):
             except Exception as e:
                 print('failed to destroy entity', e)
         self.karel.init_params()
-        self.karel.world.speed = self.speed_slider.value
+        self.world.speed = self.speed_slider.value
 
-    def load_world(self, world_file):
+    def load_world(self, world_file: str)  -> None:
         to_destroy = [e for e in scene.entities \
             if e.name == 'voxel' or e.name == 'paint' \
             or e.name == 'beeper' or e.name == 'wall' \
@@ -267,12 +269,39 @@ class App(Ursina):
                 print('failed to destroy entity', e)
         del self.karel
         self.karel = Karel(world_file)
+        self.world = self.karel.world
         self.setup_code()
         self.karel.init_params()
-        self.karel.world.speed = self.speed_slider.value
+        self.world.speed = self.speed_slider.value
         self.set_3d()
         msg = f'Position : {vec2tup(self.karel.position)}; Direction: {self.karel.facing_to()}'
         self.update_prompt(msg)
+
+    # def save_world(self, filename: Path) -> None:
+    #     with open(filename, "w") as f:
+    #         f.write(f"Dimension: ({self.loader.columns}, {self.loader.rows})\n")
+    #         for wall in sorted(self.walls):
+    #             f.write(
+    #                 f"Wall: ({wall.col}, {wall.row}); {wall.direction.name.title()}\n"
+    #             )
+    #         for loc, count in sorted(self.beepers.items()):
+    #             f.write(f"Beeper: ({loc[0]}, {loc[1]}); {count}\n")
+
+    #         for loc, color in sorted(self.corner_colors.items()):
+    #             if color:
+    #                 f.write(f"Color: ({loc[0]}, {loc[1]}); {color}\n")
+
+    #         f.write(
+    #             f"Karel: {self.karel_start_location}; "
+    #             f"{self.karel_start_direction.value}\n"
+    #         )
+
+    #         beeper_output = (
+    #             self.karel_start_beeper_count
+    #             if self.karel_start_beeper_count >= 0
+    #             else "INFINITY"
+    #         )
+    #         f.write(f"BeeperBag: {beeper_output}\n")
 
     def input(self, key) -> None:
         if key == 'w' or key == 'a' or key == 's' or key == 'd' \
@@ -290,10 +319,10 @@ class App(Ursina):
             self.move_sound.play()
         elif key == '=':
             print("Make faster...")
-            self.karel.world.speed = min(self.karel.world.speed + 0.05, 1.0)
+            self.world.speed = min(self.world.speed + 0.05, 1.0)
         elif key == '-':
             print("Make slower...")
-            self.karel.world.speed = max(self.karel.world.speed - 0.05, 0.0)
+            self.world.speed = max(self.world.speed - 0.05, 0.0)
         elif key.isdigit() and '1' <= key <= '9':
              self.set_texture(key)
         elif key == 'page_down':
@@ -304,7 +333,7 @@ class App(Ursina):
             self.set_run_code()
         elif key == 'c': # clear
             # self.clear_objects()
-            self.karel.world.clear_objects()
+            self.world.clear_objects()
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
@@ -326,7 +355,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(1 - self.karel.world.speed)
+            sleep(1 - self.world.speed)
         return wrapper
 
     def corner_action_decorator(
@@ -341,7 +370,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(1 - self.karel.world.speed)
+            sleep(1 - self.world.speed)
         return wrapper
 
     def beeper_action_decorator(
@@ -356,7 +385,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(1 - self.karel.world.speed)
+            sleep(1 - self.world.speed)
         return wrapper
 
     def block_action_decorator(
@@ -373,7 +402,7 @@ class App(Ursina):
             # manual step Panda3D loop
             taskMgr.step()
             # delay by specified amount
-            sleep(1 - self.karel.world.speed)
+            sleep(1 - self.world.speed)
         return wrapper
 
     def inject_decorator_namespace(self) -> None:
@@ -405,10 +434,6 @@ class App(Ursina):
         self.student_code.mod.remove_paint  = self.karel_action_decorator(
             self.karel.remove_paint
         )
-
-    def debug_message(self, text, position=window.center, origin=(-.5,.5), scale=2, duration=4) -> None:
-        debug_txt = Text(text=text, position=position, origin=origin, scale=scale, color=color.red)
-        destroy(debug_txt, delay=duration)
 
     def run_student_code(self) -> None:
         window.title = 'Running ' + self.student_code.module_name + '.py'
