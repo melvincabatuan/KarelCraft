@@ -35,7 +35,7 @@ class App(Ursina):
     def __init__(self,
         code_file: Path,
         world_file: str,
-        development_mode=False,
+        # development_mode=False,
         ) -> None:
         super().__init__()
         self.karel = Karel(world_file.split('.')[0]) # remove extension
@@ -419,6 +419,8 @@ class App(Ursina):
             self.student_code.mod.main()
         except KarelException as e:
             self.update_prompt(e.action, e.message)
+            self.run_code = False
+            self.run_button.disabled = False
         except Exception as e:
             print(e)
         except SystemExit: # ignore traceback on exit

@@ -132,10 +132,9 @@ class Karel(Button):
             )
         if self.num_beepers != INFINITY:
             self.num_beepers -= 1
-        key = vec2tup(self.position)[:2]
-        self.world.add_beeper(key)
+        num_of_beepers = self.world.add_beeper(self.position)
         self.position = self.world.top_position(self.position)
-        return len(self.world.beepers.get(key,[]))
+        return num_of_beepers
 
     def pick_beeper(self) -> int:
         if self.no_beeper_present():
@@ -153,8 +152,7 @@ class Karel(Button):
         return beepers_in_stack
 
     def beeper_present(self) -> bool:
-        key = vec2tup(self.position)[:2]
-        return len(self.world.beepers.get(key, []))
+        return bool(self.world.get_num_beepers(self.position))
 
     def beepers_present(self) -> bool:
         return self.beeper_present()
@@ -181,29 +179,25 @@ class Karel(Button):
         return self.world.corner_color(self.item_position()) == color
 
     def color_present(self) -> bool:
-        return self.world.paints.get(tuple(self.item_position()), False)
+        return bool(self.world.corner_color(self.item_position()))
 
     def no_color_present(self) -> bool:
         return not self.color_present()
 
     def put_block(self, texture) -> None:
-        key = vec2tup(self.position)[:2]
-        idx_in_stack = len(self.world.voxels.get(key,[]))
-        self.position = Vec3(self.position.x, self.position.y,-idx_in_stack*self.world.voxel_offset_z - 0.5)
-        block_pos = Vec3(self.position.x, self.position.y, self.position.z + 0.5)
-        self.world.add_voxel(block_pos, texture)
-        return idx_in_stack + 1
+        num_of_blocks = self.world.add_voxel(self.position, texture)
+        self.position = self.world.top_position(self.position)
+        return num_of_blocks
 
     def block_present(self) -> bool:
-        key = vec2tup(self.position)[:2]
-        return bool(len(self.world.voxels.get(key, [])))
+        return bool(self.world.get_num_blocks(self.position))
 
     def no_block_present(self) -> bool:
         return not self.block_present()
 
     def destroy_block(self) -> None:
         if self.block_present():
-            self.world.remove_voxel(tuple(self.item_position()))
+            self.world.remove_voxel(self.position)
             self.position = self.world.top_position(self.position)
         else:
             raise KarelException(

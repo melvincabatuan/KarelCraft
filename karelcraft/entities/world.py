@@ -4,12 +4,14 @@ from karelcraft.entities.voxel import Voxel
 from karelcraft.entities.beeper import Beeper
 from karelcraft.entities.paint import Paint
 from karelcraft.entities.wall import Wall
-from karelcraft.utils.helpers import vec2tup
+from karelcraft.utils.helpers import vec2tup, vec2key
 from karelcraft.utils.world_loader import WorldLoader
 
 class World(Entity):
 
-    GROUND_POSITION = (0,0,-0.5)
+    GROUND_OFFSET = -0.5
+    BEEPER_OFFSET_Z = 0.04
+    VOXEL_OFFSET_Z = 0.28
 
     def __init__(self, world_file: str) -> None:
         super().__init__(
@@ -22,15 +24,11 @@ class World(Entity):
         self.scale = Vec3(self.loader.columns, self.loader.rows, 0)
         self.create_grid()
         self.position_correction()
-        self.beeper_offset_z = 0.1
-        self.voxel_offset_z  = 1
-        self.beeper_position_z = self.beeper_offset_z
+
         self.speed =  self.loader.init_speed
         self.world_list = self.loader.available_worlds
-
-        self.paints  : dict[tuple[int, int], Paint]  = defaultdict(None)
-        self.voxels  : dict[tuple[int, int], list]   = defaultdict(list)
-        self.beepers : dict[tuple[int, int], list]   = defaultdict(list)
+        self.stacks : dict[tuple[int, int], list]   = defaultdict(list)
+        self.walls = self.loader.walls
         self.load_beepers()
         self.load_walls()
         self.load_paints()
@@ -56,7 +54,7 @@ class World(Entity):
                 self.add_beeper(key)
 
     def load_walls(self) -> None:
-        for w in self.loader.walls:
+        for w in self.walls:
             wall_pos = Vec3(w.col, w.row, -1)
             wall_object = Wall(position = wall_pos, direction = w.direction)
 
@@ -66,69 +64,90 @@ class World(Entity):
             self.paint_corner(paint_pos, paint)
 
     def paint_corner(self, position, color_str) -> None:
-        paint = Paint(position, color_str)
+        self.remove_color(position) # no stacking of paints
+        key = vec2key(position)
+        paint_pos = self.top_position(position) + Vec3(0, 0, - self.GROUND_OFFSET)
+        paint = Paint(paint_pos, color_str)
         paint.tooltip = Tooltip(f'Paint@{vec2tup(position)}: {color_str}')
-        self.paints[vec2tup(position)] = paint
+        self.stacks[key].append(paint)
+
+    def remove_color(self, position) -> None:
+        if top := self.top_in_stack(position):
+            if top.name == 'paint':
+                item = self.stacks[vec2key(position)].pop()
+                destroy(item, 1 - self.speed)
+        # # Linear logic
+        # for item in reversed(self.stacks):
+        #     if item.name == 'paint':
+        #         destroy(item, 1 - self.speed)
 
     def corner_color(self, position) -> str:
-        return self.paints.get(tuple(position))
+        '''
+        Get the topmost paint object color in the item stack,
+        else return None for no paint
+        Stack logic: Karel can only access the topmost object/entity
+        '''
+        if top := self.top_in_stack(position):
+            if top.name == 'paint':
+                return top.color.name
+        return None
+        # Linear logic:
+        # result = None
+        # for item in reversed(self.stacks[vec2key(position)]):
+        #     if item.name == 'paint':
+        #         return item.color.name
+        # return result
 
-    def add_beeper(self, key) -> int:
-        idx_in_stack = len(self.beepers.get(key,[]))
-        beeper_pos = Vec3(key[0], key[1],-idx_in_stack*self.beeper_offset_z)
-        beeper = Beeper(position = beeper_pos, num_beepers = idx_in_stack + 1)
-        self.beepers[key].append(beeper)
-        return idx_in_stack + 1
+    def add_beeper(self, position) -> int:
+        key = vec2key(position)
+        beeper_pos = self.top_position(position) + Vec3(0, 0, - self.GROUND_OFFSET)
+        idx = self.get_num_beepers(position)
+        beeper = Beeper(position = beeper_pos, num_beepers = idx + 1)
+        self.stacks[key].append(beeper)
+        return idx + 1
 
     def remove_beeper(self, position) -> int:
-        key = vec2tup(position)[:2]
-        element = self.beepers[key].pop()
-        destroy(element, 1 - self.speed)
-        return len(self.beepers.get(key,[]))
+        beepers_in_stack = self.get_num_beepers(position)
+        if top := self.top_in_stack(position):
+            if top.name == 'beeper':
+                item = self.stacks[vec2key(position)].pop()
+                destroy(item, 1 - self.speed)
+                beepers_in_stack -= 1
+        return beepers_in_stack
 
     def add_voxel(self, position, texture) -> None:
-        voxel = Voxel(position = position, texture  = texture)
+        key = vec2key(position)
+        block_pos = self.top_position(position) + Vec3(0, 0, - self.GROUND_OFFSET)
+        voxel = Voxel(position = block_pos, texture  = texture)
         texture_name = texture.name.split('.')[0]
         position.z = abs(position.z)
         voxel.tooltip = Tooltip(f'Block@{vec2tup(position)}: {texture_name}')
-        self.voxels[vec2tup(position)[:2]].append(voxel)
+        self.stacks[key].append(voxel)
 
-    def remove_voxel(self, position) -> int:
-        key = vec2tup(position)[:2]
-        element = self.voxels[key].pop()
-        destroy(element, 1 - self.speed)
-        return len(self.voxels.get(key,[]))
-
-    def remove_color(self, position) -> None:
-        element = self.paints.pop(position, None)
-        destroy(element, 1 - self.speed)
+    def remove_voxel(self, position) -> None:
+        if top := self.top_in_stack(position):
+            if top.name == 'voxel':
+                item = self.stacks[vec2key(position)].pop()
+                destroy(item, 1 - self.speed)
 
     def is_inside(self, position) -> bool:
         return -0.50 < position[0] < self.loader.columns - 0.5 \
            and -0.50 < position[1] < self.loader.rows - 0.5
 
-    def top_position(self, position) -> None:
-        key = vec2tup(position)[:2]
-        top = Vec3(position.x, position.y, self.GROUND_POSITION[-1])
-        if self.beepers.get(key,[]):
-            beeper_top = self.beepers.get(key,[])[-1].position + Vec3(self.GROUND_POSITION)
-            if beeper_top.z < top.z:
-                top = beeper_top
-        if self.voxels.get(key,[]):
-            block_top = self.voxels.get(key,[])[-1].position + Vec3(self.GROUND_POSITION)
-            if block_top.z < top.z:
-                top = block_top + Vec3(0,0,-0.2)
-        return top
+    def top_in_stack(self, position) -> Button:
+        item_stack = self.stacks.get(vec2key(position), [])
+        if item_stack:
+            return item_stack[-1]
+        else:
+            return None
 
-    def clear_objects(self) -> None:
-        for k in self.paints.keys():
-            destroy(self.paints[k])
-        beepers_to_destroy = [b for k in self.beepers for b in self.beepers[k]]
-        for beeper in beepers_to_destroy:
-            destroy(beeper)
-        blocks_to_destroy  = [b for k in self.voxels for b in self.voxels[k]]
-        for block in blocks_to_destroy:
-            destroy(block)
+    def top_position(self, position) -> None:
+        if top := self.top_in_stack(position):
+            if top.name == 'voxel':
+                return top.position + Vec3(0,0, self.GROUND_OFFSET - self.VOXEL_OFFSET_Z)
+            if top.name == 'beeper' or top.name == 'paint':
+                return top.position + Vec3(0,0, self.GROUND_OFFSET - self.BEEPER_OFFSET_Z)
+        return Vec3(position.x, position.y, self.GROUND_OFFSET)
 
     def wall_exists(self, position, direction) -> bool:
         key = vec2tup(position)[:2]
@@ -144,3 +163,40 @@ class World(Entity):
 
     def get_maxside(self) -> int:
         return max(self.scale.x, self.scale.y)
+
+    def get_num_beepers(self, position) -> int:
+        return sum(isinstance(b, Beeper) for b in self.stacks.get(vec2key(position), []))
+
+    def get_num_blocks(self, position) -> int:
+        return sum(isinstance(v, Voxel) for v in self.stacks.get(vec2key(position), []))
+
+    # def save_to_file(self, filename: Path) -> None:
+    #     with open(filename, "w") as f:
+    #         f.write(f"Dimension: ({self.loader.columns}, {self.loader.rows})\n")
+    #         for wall in sorted(self.walls):
+    #             f.write(
+    #                 f"Wall: ({wall.avenue}, {wall.street}); {wall.direction.value}\n"
+    #             )
+
+    #         # Next, output all beepers
+    #         for loc, count in sorted(self.beepers.items()):
+    #             f.write(f"Beeper: ({loc[0]}, {loc[1]}); {count}\n")
+
+    #         # Next, output all color information
+    #         for loc, color in sorted(self.corner_colors.items()):
+    #             if color:
+    #                 f.write(f"Color: ({loc[0]}, {loc[1]}); {color}\n")
+
+    #         # Next, output Karel information
+    #         f.write(
+    #             f"Karel: {self.karel_start_location}; "
+    #             f"{self.karel_start_direction.value}\n"
+    #         )
+
+    #         # Finally, output beeperbag info
+    #         beeper_output = (
+    #             self.karel_start_beeper_count
+    #             if self.karel_start_beeper_count >= 0
+    #             else "INFINITY"
+    #         )
+    #         f.write(f"BeeperBag: {beeper_output}\n")

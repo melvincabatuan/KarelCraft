@@ -9,6 +9,11 @@ Converts Vec2 or Vec3 to int tuple
 vec2tup = lambda v: tuple(map(int, v))
 
 
+'''
+Converts Vec2 or Vec3 to int tuple key or 2D position
+'''
+vec2key = lambda v: tuple(map(int, v))[:2]
+
 
 class KarelException(Exception):
     def __init__(self, position: tuple,

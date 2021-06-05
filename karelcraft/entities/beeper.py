@@ -6,7 +6,7 @@ class Beeper(Entity):
         super().__init__(
             model = 'quad',
             parent = scene,
-            scale = 1,
+            scale = 1.1,
             position = position,
             color = color.green,
             texture = 'icon.png',

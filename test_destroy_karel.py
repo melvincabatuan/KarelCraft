@@ -3,9 +3,9 @@
 from karelcraft.karelcraft import *
 from enum import Enum
 
-# MODE = 'beeper'
+MODE = 'beeper'
 # MODE, COLOR = 'paint', 'blue'
-MODE = 'block'
+# MODE = 'block'
 
 def turn_around():
     turn_left()
