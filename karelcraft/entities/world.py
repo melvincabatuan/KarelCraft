@@ -1,11 +1,17 @@
 from ursina import *
-from collections import defaultdict
 from karelcraft.entities.voxel import Voxel
 from karelcraft.entities.beeper import Beeper
 from karelcraft.entities.paint import Paint
 from karelcraft.entities.wall import Wall
 from karelcraft.utils.helpers import vec2tup, vec2key
-from karelcraft.utils.world_loader import WorldLoader
+from karelcraft.utils.world_loader import WorldLoader, COLOR_LIST, TEXTURE_LIST
+from karelcraft.utils.direction import Direction
+from collections import defaultdict
+from typing import NamedTuple
+
+class Size(NamedTuple):
+    col: int
+    row: int
 
 class World(Entity):
 
@@ -13,25 +19,27 @@ class World(Entity):
     BEEPER_OFFSET_Z = 0.04
     VOXEL_OFFSET_Z = 0.28
 
-    def __init__(self, world_file: str) -> None:
+    def __init__(self, world_file: str, textures: dict) -> None:
         super().__init__(
             model    = 'quad',
             parent   = scene,
             color    = rgb(125, 125, 125),
         )
-        self.loader = WorldLoader(world_file)
-        self.set_position((self.loader.columns / 2, self.loader.rows / 2, 0))
-        self.scale = Vec3(self.loader.columns, self.loader.rows, 0)
+        self.world_loader = WorldLoader(world_file)
+        self.textures = textures
+        self.size   = Size(self.world_loader.columns, self.world_loader.rows)
+        self.set_position((self.size.col/ 2, self.size.row/2, 0))
+        self.scale = Vec3(self.size.col, self.size.row, 0)
         self.create_grid()
         self.position_correction()
-
-        self.speed =  self.loader.init_speed
-        self.world_list = self.loader.available_worlds
+        self.speed =  self.world_loader.init_speed
+        self.world_list = self.world_loader.available_worlds
         self.stacks : dict[tuple[int, int], list]   = defaultdict(list)
-        self.walls = self.loader.walls
         self.load_beepers()
-        self.load_walls()
         self.load_paints()
+        self.load_walls()
+        self.load_blocks()
+        self.load_stacks()
 
     def position_correction(self):
         '''
@@ -41,7 +49,7 @@ class World(Entity):
         self.world_position -= Vec3((0.5, 0.5, -0.01))
 
     def create_grid(self, height = -0.001):
-        Entity(model = Grid(self.loader.columns, self.loader.rows, thickness=1.8),
+        Entity(model = Grid(self.size.col, self.size.row, thickness=1.8),
             scale = 1,
             position = (self.origin.x, self.origin.y, height),
             color = color.white,
@@ -49,19 +57,40 @@ class World(Entity):
         )
 
     def load_beepers(self) -> None:
-        for key, val in self.loader.beepers.items():
+        for key, val in self.world_loader.beepers.items():
             for _ in range(val):
                 self.add_beeper(key)
 
     def load_walls(self) -> None:
+        self.walls = self.world_loader.walls
         for w in self.walls:
             wall_pos = Vec3(w.col, w.row, -1)
             wall_object = Wall(position = wall_pos, direction = w.direction)
 
     def load_paints(self) -> None:
-        for key, paint in self.loader.corner_colors.items():
+        for key, paint in self.world_loader.corner_colors.items():
             paint_pos = Vec3(key[0], key[1], 0)
             self.paint_corner(paint_pos, paint)
+
+    def load_blocks(self) -> None:
+        for key, item in self.world_loader.blocks.items():
+            block_pos = Vec3(key[0], key[1], 0)
+            for _ in range(item[1]):
+                self.add_voxel(block_pos, self.textures[item[0]] )
+
+    def load_stacks(self) -> None:
+        for key, stack_string in self.world_loader.stack_strings.items():
+            for item in stack_string.split():
+                initial = item[0]
+                if initial == 'b':
+                    self.add_beeper(key)
+                elif initial == 'p':
+                    paint_pos = Vec3(key[0], key[1], 0)
+                    self.paint_corner(paint_pos, COLOR_LIST[int(item[1:])])
+                elif initial == 'v':
+                    block_pos = Vec3(key[0], key[1], 0)
+                    texture_name = TEXTURE_LIST[int(item[1:])]
+                    self.add_voxel(block_pos, self.textures[texture_name])
 
     def paint_corner(self, position, color_str) -> None:
         self.remove_color(position) # no stacking of paints
@@ -101,16 +130,17 @@ class World(Entity):
     def add_beeper(self, position) -> int:
         key = vec2key(position)
         beeper_pos = self.top_position(position) + Vec3(0, 0, - self.GROUND_OFFSET)
-        idx = self.get_num_beepers(position)
+        idx = self.count_beepers(key)
         beeper = Beeper(position = beeper_pos, num_beepers = idx + 1)
         self.stacks[key].append(beeper)
         return idx + 1
 
     def remove_beeper(self, position) -> int:
-        beepers_in_stack = self.get_num_beepers(position)
+        key = vec2key(position)
+        beepers_in_stack = self.count_beepers(key)
         if top := self.top_in_stack(position):
             if top.name == 'beeper':
-                item = self.stacks[vec2key(position)].pop()
+                item = self.stacks[key].pop()
                 destroy(item, 1 - self.speed)
                 beepers_in_stack -= 1
         return beepers_in_stack
@@ -131,8 +161,8 @@ class World(Entity):
                 destroy(item, 1 - self.speed)
 
     def is_inside(self, position) -> bool:
-        return -0.50 < position[0] < self.loader.columns - 0.5 \
-           and -0.50 < position[1] < self.loader.rows - 0.5
+        return -0.50 < position[0] < self.size.col - 0.5 \
+           and -0.50 < position[1] < self.size.row - 0.5
 
     def top_in_stack(self, position) -> Button:
         item_stack = self.stacks.get(vec2key(position), [])
@@ -151,7 +181,7 @@ class World(Entity):
 
     def wall_exists(self, position, direction) -> bool:
         key = vec2tup(position)[:2]
-        for w in self.loader.walls:
+        for w in self.world_loader.walls:
             if (w.col, w.row, w.direction) == (key[0], key[1], direction):
                 return True
         return False
@@ -164,8 +194,67 @@ class World(Entity):
     def get_maxside(self) -> int:
         return max(self.scale.x, self.scale.y)
 
-    def get_num_beepers(self, position) -> int:
-        return sum(isinstance(b, Beeper) for b in self.stacks.get(vec2key(position), []))
+    def count_beepers(self, key) -> int:
+        return self.count_item(key, Beeper)
 
-    def get_num_blocks(self, position) -> int:
-        return sum(isinstance(v, Voxel) for v in self.stacks.get(vec2key(position), []))
+    def count_blocks(self, key) -> int:
+        return self.count_item(key, Voxel)
+
+    def count_item(self, key, object_type) -> int:
+        return sum(isinstance(i, object_type) for i in self.stacks.get(key, []))
+
+    def all_beepers(self, key) -> bool:
+        return self.same_type(key, Beeper)
+
+    def all_colors(self, key) -> bool:
+        return self.same_type(key, Paint)
+
+    def all_same_blocks(self, key) -> tuple:
+        is_same_texture = len(set(i.texture for i in self.stacks.get(key, []))) == 1
+        return self.same_type(key, Voxel) and is_same_texture
+
+    def same_type(self, key, object_type) -> bool:
+        return all(isinstance(i, object_type) for i in self.stacks.get(key, []))
+
+    def stack_string(self, key) -> str:
+        '''
+        Encodes the stack into a string]
+        beeper : 'b'
+        voxel  : 'v' + idx of texture
+        paint  : 'p' + idx of color
+        '''
+        stack_list = []
+        for item in self.stacks.get(key, []):
+            if item.name == 'voxel':
+                idx = TEXTURE_LIST.index(item.texture_name)
+                stack_list.append(item.name[0] + str(idx))
+            elif item.name == 'beeper':
+                stack_list.append(item.name[0])
+            elif item.name == 'paint':
+                idx = COLOR_LIST.index(item.color.name)
+                stack_list.append(item.name[0] + str(idx))
+        return ' '.join(stack_list)
+
+    @staticmethod
+    def get_alt_wall(wall: Wall) -> Wall:
+        if wall.direction == Direction.NORTH:
+            return Wall(wall.col, wall.row + 1, Direction.SOUTH)
+        if wall.direction == Direction.SOUTH:
+            return Wall(wall.col, wall.row - 1, Direction.NORTH)
+        if wall.direction == Direction.EAST:
+            return Wall(wall.col + 1, wall.row, Direction.WEST)
+        if wall.direction == Direction.WEST:
+            return Wall(wall.col - 1, wall.row, Direction.EAST)
+        raise ValueError
+
+    def add_wall(self, wall: Wall) -> None:
+        alt_wall = self.get_alt_wall(wall)
+        if wall not in self.walls and alt_wall not in self.walls:
+            self.walls.add(wall)
+
+    def remove_wall(self, wall: Wall) -> None:
+        alt_wall = self.get_alt_wall(wall)
+        if wall in self.walls:
+            self.walls.remove(wall)
+        if alt_wall in self.walls:
+            self.walls.remove(alt_wall)

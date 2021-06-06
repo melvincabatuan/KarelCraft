@@ -7,8 +7,8 @@ This tests the stacking of homogenous objects - blocks, paints, beepers
 from karelcraft.karelcraft import *
 import random
 
-MODE = 'beeper'
-# MODE = 'block'
+# MODE = 'beeper'
+MODE = 'block'
 # MODE = 'paint'  # no stacking / destroy
 
 def turn_around():

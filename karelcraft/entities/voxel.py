@@ -14,3 +14,4 @@ class Voxel(Button):
             scale = 0.5
             )
         self.highlight_color = self.color.tint(.2)
+        self.texture_name = self.texture.name.split('_')[0]

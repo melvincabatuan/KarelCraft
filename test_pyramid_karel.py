@@ -73,7 +73,7 @@ def pyramid():
     move()
     width += 1
 
-  paint_corner(get_color())
+  # paint_corner(get_color())
   texture = random.choice(TEXTURES)
   put_block(texture)
   # put_beeper()
@@ -97,4 +97,4 @@ def main():
 
 
 if __name__ == "__main__":
-  run_karel_program()
+  run_karel_program('8x8')

@@ -9,9 +9,9 @@ class Mode(Enum):
     paint  = 3
 
 # Set the item to put in corner
-mode = Mode.beeper
+# mode = Mode.beeper
 # mode = Mode.paint
-# mode = Mode.block
+mode = Mode.block
 
 def main():
     """ Your code goes here! """
@@ -35,7 +35,7 @@ def main():
             break
 
 if __name__ == "__main__":
-    run_karel_program()
+    run_karel_program('8x8')
 
 '''
 Available colors in Ursina:

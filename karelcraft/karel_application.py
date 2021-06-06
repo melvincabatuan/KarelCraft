@@ -16,10 +16,11 @@ from karelcraft.entities.world import World
 from karelcraft.entities.karel import Karel
 from karelcraft.entities.voxel import Voxel
 from karelcraft.entities.cog_menu import CogMenu
+from karelcraft.entities.file_browser_save import FileBrowserSave
 from karelcraft.entities.dropdown_menu import DropdownMenu, DropdownMenuButton
-from karelcraft.utils.helpers import vec2tup, KarelException
-from karelcraft.utils.texture_loader import TextureLoader
+from karelcraft.utils.helpers import vec2tup, vec2key, KarelException
 from karelcraft.utils.student_code import StudentCode
+from karelcraft.utils.world_loader import COLOR_LIST
 
 import sys
 import webbrowser
@@ -38,8 +39,8 @@ class App(Ursina):
         # development_mode=False,
         ) -> None:
         super().__init__()
-        # Note: Creating Karel needs Ursina import (render)
-        self.karel = Karel(world_file.split('.')[0])
+        self.setup_texture()
+        self.karel = Karel(world_file, self.textures)
         self.world = self.karel.world
         self.code_file = code_file
         self.setup_window()
@@ -47,13 +48,14 @@ class App(Ursina):
         self.setup_controls()
         self.init_prompt()
         self.setup_menu()
-        self.setup_texture()
         self.setup_sound_lights_cam()
 
     def setup_texture(self):
-        self.texture_loader = TextureLoader()
-        self.textures       = self.texture_loader.textures
-        self.texture_name   = self.texture_loader.random_texture()
+        default_texture_path = Path(__file__).absolute().parent.parent / "assets/blocks"
+        self.textures = {texture_path.stem.split('_')[0] : load_texture('assets/blocks/'+ texture_path.stem +'.png') \
+                        for texture_path in default_texture_path.glob("*.png") }
+        self.texture_names  = list(self.textures.keys())
+        self.texture_name   = random.choice(self.texture_names)
         self.block_texture  = self.textures.get(self.texture_name, 'grass')
 
     def setup_window(self) -> None:
@@ -92,11 +94,12 @@ class App(Ursina):
     def setup_menu(self) -> None:
         window.cog_menu.enabled = False
         self.menu = CogMenu({
-        'Karelcraft Repo' : Func(webbrowser.open, 'https://github.com/melvincabatuan/KarelCraft'),
-        'Change Texture <gray>[1 to 7]<default>'  : self.set_texture,
+        'Save World State <gray>[Ctrl+s]<default>': self.save_world,
+        'Change Texture <gray>[1 to 9]<default>'  : self.set_texture,
         'Change Render Mode <gray>[F10]<default>' : window.next_render_mode,
         'Camera 3D View <gray>[Page Up]<default>' : self.set_3d,
         'Camera 2D View <gray>[Page Down]<default>' : self.set_2d,
+        'Karelcraft Repo' : Func(webbrowser.open, 'https://github.com/melvincabatuan/KarelCraft'),
         })
         self.menu.on_click = Func(setattr, self.menu, 'enabled', False)
         self.menu.eternal = True
@@ -232,9 +235,9 @@ class App(Ursina):
 
     def set_texture(self, key=None) -> None:
         if key is None:
-            self.texture_name  = self.texture_loader.random_texture()
+            self.texture_name  = random.choice(self.texture_names)
         else:
-            self.texture_name  = self.texture_loader.texture_names[int(key)-1]
+            self.texture_name  = self.texture_names[int(key)-1]
         self.block_texture = self.textures[self.texture_name]
 
     def set_run_code(self) -> None:
@@ -261,49 +264,63 @@ class App(Ursina):
         to_destroy = [e for e in scene.entities \
             if e.name == 'voxel' or e.name == 'paint' \
             or e.name == 'beeper' or e.name == 'wall' \
-            or e.name == 'karel' or e.name == 'world']
+            or e.name == 'karel' or e.name == 'world' ]
         for d in to_destroy:
             try:
                 destroy(d)
             except Exception as e:
                 print('failed to destroy entity', e)
         del self.karel
-        self.karel = Karel(world_file)
+        self.karel = Karel(world_file, self.textures)
         self.world = self.karel.world
         self.setup_code()
         self.karel.init_params()
         self.world.speed = self.speed_slider.value
         self.set_3d()
-        msg = f'Position : {vec2tup(self.karel.position)}; Direction: {self.karel.facing_to()}'
-        self.update_prompt(msg)
+        self.update_prompt(f'Position : {vec2tup(self.karel.position)}; Direction: {self.karel.facing_to()}')
 
-    # def save_world(self, filename: Path) -> None:
-    #     with open(filename, "w") as f:
-    #         f.write(f"Dimension: ({self.loader.columns}, {self.loader.rows})\n")
-    #         for wall in sorted(self.walls):
-    #             f.write(
-    #                 f"Wall: ({wall.col}, {wall.row}); {wall.direction.name.title()}\n"
-    #             )
-    #         for loc, count in sorted(self.beepers.items()):
-    #             f.write(f"Beeper: ({loc[0]}, {loc[1]}); {count}\n")
+    def save_world(self) -> None:
+        wp = FileBrowserSave(file_type = '.w')
+        try:
+            wp.path = Path('./karelcraft/worlds/')
+            wp.data = self.get_world_state()
+        except: # use current dir instead
+            print(f"Can't find the directory {wp.path}. Using current directory...")
+            wp.data = self.get_world_state()
 
-    #         for loc, color in sorted(self.corner_colors.items()):
-    #             if color:
-    #                 f.write(f"Color: ({loc[0]}, {loc[1]}); {color}\n")
 
-    #         f.write(
-    #             f"Karel: {self.karel_start_location}; "
-    #             f"{self.karel_start_direction.value}\n"
-    #         )
+    def get_world_state(self) -> str:
+        world_state = f"Karel: {vec2key(self.karel.position)}; {self.karel.direction.name.title()}\n"
+        world_state += f"Dimension: ({self.world.size.col}, {self.world.size.row})\n"
+        beeper_output = (
+            self.karel.num_beepers
+            if self.karel.start_beeper_count >= 0
+            else "INFINITY"
+        )
+        world_state += f"BeeperBag: {beeper_output}\n"
 
-    #         beeper_output = (
-    #             self.karel_start_beeper_count
-    #             if self.karel_start_beeper_count >= 0
-    #             else "INFINITY"
-    #         )
-    #         f.write(f"BeeperBag: {beeper_output}\n")
+        for key in sorted(self.world.stacks.keys()):
+            if self.world.all_beepers(key):
+                world_state += f"Beeper: ({key[0]}, {key[1]}); {self.world.count_beepers(key)}\n"
+            elif self.world.all_same_blocks(key):
+                texture_name = self.world.top_in_stack(key).texture_name
+                world_state += f"Block: ({key[0]}, {key[1]}); {texture_name}; {self.world.count_blocks(key)}\n"
+            elif self.world.all_colors(key):
+                color_name = self.world.corner_color((key[0], key[1], 0))
+                world_state += f"Color: ({key[0]}, {key[1]}); {color_name}\n"
+            elif stack := self.world.stacks.get(key, []):
+                world_state += f"Stack: ({key[0]}, {key[1]}); {self.world.stack_string(key)}\n"
+
+        for wall in sorted(self.world.walls):
+            world_state += f"Wall: ({wall.col}, {wall.row}); {wall.direction.name.title()}\n"
+
+        return world_state
+
+
+
 
     def input(self, key) -> None:
+        print(key)
         if key == 'w' or key == 'a' or key == 's' or key == 'd' \
           or key == 'arrow_up' or key == 'arrow_down' \
           or key == 'arrow_left' or key == 'arrow_right':
@@ -337,6 +354,8 @@ class App(Ursina):
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
+        elif key == 'control-s':
+            self.save_world()
         super().input(key)
 
     def karel_action_decorator(

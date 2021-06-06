@@ -3,10 +3,14 @@ from ursina import *
 from karelcraft.utils.helpers import vec2tup, INFINITY, KarelException
 from karelcraft.utils.direction import Direction
 from karelcraft.entities.world import World
+from karelcraft.utils.helpers import vec2key
 
 class Karel(Button):
 
-    def __init__(self, world_file: str) -> None:
+    def __init__(self,
+        world_file: str,
+        textures: dict,
+        ) -> None:
         super().__init__(
         parent   = scene,
         color    = color.white66,
@@ -25,14 +29,17 @@ class Karel(Button):
                  'arrow_right': Direction.EAST,
                  }
         self.world_file = world_file
+        self.textures   = textures
         self.init_params()
 
     def init_params(self):
-        self.world     = World(self.world_file)
-        self.position  = Vec3(self.world.loader.start_location + (-0.5,))
-        self.direction = self.world.loader.start_direction
+        self.world     = World(self.world_file, self.textures)
+        key = self.world.world_loader.start_location
+        self.position  = Vec3(key + (self.world.top_position(key)[-1],))
+        self.direction = self.world.world_loader.start_direction
         self.face2direction()
-        self.num_beepers = self.world.loader.start_beeper_count
+        self.start_beeper_count = self.world.world_loader.start_beeper_count
+        self.num_beepers = self.start_beeper_count
 
     def facing_to(self) -> str:
         return self.direction.name
@@ -152,7 +159,7 @@ class Karel(Button):
         return beepers_in_stack
 
     def beeper_present(self) -> bool:
-        return bool(self.world.get_num_beepers(self.position))
+        return bool(self.world.count_beepers(vec2key(self.position)))
 
     def beepers_present(self) -> bool:
         return self.beeper_present()
@@ -190,7 +197,7 @@ class Karel(Button):
         return num_of_blocks
 
     def block_present(self) -> bool:
-        return bool(self.world.get_num_blocks(self.position))
+        return bool(self.world.count_blocks(vec2key(self.position)))
 
     def no_block_present(self) -> bool:
         return not self.block_present()
