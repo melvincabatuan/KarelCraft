@@ -225,14 +225,15 @@ class World(Entity):
         '''
         stack_list = []
         for item in self.stacks.get(key, []):
-            if item.name == 'voxel':
-                idx = TEXTURE_LIST.index(item.texture_name)
-                stack_list.append(item.name[0] + str(idx))
-            elif item.name == 'beeper':
-                stack_list.append(item.name[0])
-            elif item.name == 'paint':
-                idx = COLOR_LIST.index(item.color.name)
-                stack_list.append(item.name[0] + str(idx))
+            if item:
+                if item.name == 'voxel':
+                    idx = TEXTURE_LIST.index(item.texture_name)
+                    stack_list.append(item.name[0] + str(idx))
+                elif item.name == 'beeper':
+                    stack_list.append(item.name[0])
+                elif item.name == 'paint':
+                    idx = COLOR_LIST.index(item.color.name)
+                    stack_list.append(item.name[0] + str(idx))
         return ' '.join(stack_list)
 
     @staticmethod

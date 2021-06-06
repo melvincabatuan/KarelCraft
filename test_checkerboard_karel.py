@@ -1,4 +1,26 @@
 from karelcraft.karelcraft import *
+import random
+
+# MODE = 'beeper'
+# MODE, COLOR = 'paint', 'cyan'
+MODE = 'block'
+
+TEXTURES = ('grass','stone','brick','dirt','lava', 'rose', \
+          'dlsu', 'diamond', 'emerald', 'gold', 'obsidian', \
+          'leaves', 'sand', 'wood', 'stonebrick', 'sponge', 'snow')
+
+def get_color():
+  '''
+  Returns a random color
+  '''
+  colors = ["red","black","cyan","white", \
+    "smoke", "green", "light_gray", "gray", \
+    "dark_gray", "black", "magenta", \
+    "orange", "pink",  "blue","yellow", "lime", \
+    "turquoise", "azure", "violet", "brown", \
+    "olive", "peach", "gold", "salmon"
+  ]
+  return random.choice(colors)
 
 def turn_right():
   turn_left()
@@ -15,36 +37,49 @@ def go_back():
     move()
   turn_right()
 
-def install_beepers():
-  put_beeper()
+def install():
+  if MODE == 'block':
+    texture = random.choice(TEXTURES)
+    put_block(texture)
+  elif MODE == 'beeper':
+    put_beeper()
+  elif MODE == 'paint':
+    paint_corner(get_color())
+
   while front_is_clear():
     move()
     if front_is_clear():
       move()
-      put_beeper()
+      if MODE == 'block':
+        texture = random.choice(TEXTURES)
+        put_block(texture)
+      elif MODE == 'beeper':
+        put_beeper()
+      elif MODE == 'paint':
+        paint_corner(get_color())
 
 def main():
   # Special case for 1 column:
   if front_is_blocked():
     turn_left()
-    install_beepers()
+    install()
   # Two or more columns
   else:
     # Base-case
-    install_beepers()
+    install()
     go_back()
     # Inductive
     while front_is_clear():
-      if beeper_present() and front_is_clear():
+      if (beeper_present() or block_present() or color_present()) and front_is_clear():
         move()
         turn_right()
         move()
-        install_beepers()
+        install()
         go_back()
-      if no_beeper_present() and front_is_clear():
+      if (no_beeper_present() or no_block_present() or no_color_present()) and front_is_clear():
         move()
         turn_right()
-        install_beepers()
+        install()
         go_back()
 
 

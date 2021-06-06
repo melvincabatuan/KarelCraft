@@ -36,7 +36,7 @@ class App(Ursina):
     def __init__(self,
         code_file: Path,
         world_file: str,
-        # development_mode=False,
+        development_mode=False,
         ) -> None:
         super().__init__()
         self.setup_texture()
@@ -260,6 +260,16 @@ class App(Ursina):
         self.karel.init_params()
         self.world.speed = self.speed_slider.value
 
+    def clear_objects(self) -> None:
+        to_destroy = [e for e in scene.entities \
+            if e.name == 'voxel' or e.name == 'paint' \
+            or e.name == 'beeper' or e.name == 'wall' ]
+        for d in to_destroy:
+            try:
+                destroy(d)
+            except Exception as e:
+                print('failed to destroy entity', e)
+
     def load_world(self, world_file: str)  -> None:
         to_destroy = [e for e in scene.entities \
             if e.name == 'voxel' or e.name == 'paint' \
@@ -317,10 +327,7 @@ class App(Ursina):
         return world_state
 
 
-
-
     def input(self, key) -> None:
-        print(key)
         if key == 'w' or key == 'a' or key == 's' or key == 'd' \
           or key == 'arrow_up' or key == 'arrow_down' \
           or key == 'arrow_left' or key == 'arrow_right':
@@ -349,8 +356,7 @@ class App(Ursina):
         elif key == 'r': # run student code
             self.set_run_code()
         elif key == 'c': # clear
-            # self.clear_objects()
-            self.world.clear_objects()
+            self.clear_objects()
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode

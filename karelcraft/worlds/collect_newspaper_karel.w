@@ -12,4 +12,4 @@ Wall: (5, 1); west
 Wall: (5, 3); west
 Beeper: (5, 2); 1
 Karel: (2, 3); east
-Speed: 0.00
+Speed: 0.80

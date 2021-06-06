@@ -70,4 +70,4 @@ def main():
   inner_layers()
 
 if __name__ == "__main__":
-  run_karel_program()
+  run_karel_program('7x7')

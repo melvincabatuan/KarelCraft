@@ -8,8 +8,8 @@ from karelcraft.karelcraft import *
 import random
 
 # MODE = 'beeper'
-MODE = 'block'
-# MODE = 'paint'  # no stacking / destroy
+# MODE = 'block'
+MODE = 'paint'  # no stacking / destroy
 
 def turn_around():
     turn_left()
