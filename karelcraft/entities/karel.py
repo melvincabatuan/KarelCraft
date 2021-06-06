@@ -193,8 +193,11 @@ class Karel(Button):
 
     def put_block(self, texture) -> None:
         num_of_blocks = self.world.add_voxel(self.position, texture)
-        self.position = self.world.top_position(self.position)
+        self.update_z()
         return num_of_blocks
+
+    def update_z(self) -> None:
+        self.position = self.world.top_position(self.position)
 
     def block_present(self) -> bool:
         return bool(self.world.count_blocks(vec2key(self.position)))

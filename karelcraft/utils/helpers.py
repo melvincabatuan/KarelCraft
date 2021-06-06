@@ -15,6 +15,12 @@ Converts Vec2 or Vec3 to int tuple key or 2D position
 vec2key = lambda v: tuple(map(int, v))[:2]
 
 
+'''
+Converts key to Vec3 position
+'''
+vec2key = lambda v: tuple(map(int, v))[:2]
+
+
 
 class KarelException(Exception):
     def __init__(self, position: tuple,

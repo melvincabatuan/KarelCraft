@@ -76,7 +76,8 @@ class App(Ursina):
         self.run_code = False
 
     def setup_sound_lights_cam(self):
-        self.move_sound = Audio('assets/move.mp3', autoplay = False) # loop = True,
+        self.move_sound = Audio('assets/sounds/move.mp3', autoplay = False) # loop = True,
+        self.destroy_sound = Audio('assets/sounds/destroy.wav', autoplay = False)
         Light(type='ambient', color=(0.6, 0.6, 0.6, 1))
         Light(type='directional', color=(0.6, 0.6, 0.6, 1), direction=(1, 1, 1))
         EditorCamera(rotation_speed = 25) # lessen angle adjustment
@@ -94,7 +95,7 @@ class App(Ursina):
     def setup_menu(self) -> None:
         window.cog_menu.enabled = False
         self.menu = CogMenu({
-        'Save World State <gray>[Ctrl+s]<default>': self.save_world,
+        'Save World State <gray>[ctrl+s]<default>': self.save_world,
         'Change Texture <gray>[1 to 9]<default>'  : self.set_texture,
         'Change Render Mode <gray>[F10]<default>' : window.next_render_mode,
         'Camera 3D View <gray>[Page Up]<default>' : self.set_3d,
@@ -258,6 +259,7 @@ class App(Ursina):
             except Exception as e:
                 print('failed to destroy entity', e)
         self.karel.init_params()
+        self.world = self.karel.world
         self.world.speed = self.speed_slider.value
 
     def clear_objects(self) -> None:
@@ -271,6 +273,10 @@ class App(Ursina):
                 print('failed to destroy entity', e)
 
     def load_world(self, world_file: str)  -> None:
+        '''
+        Loads a world, i.e. world_file, from ./karelcraft/worlds/ directory
+        Destroy existing entities except UI, then, recreate them
+        '''
         to_destroy = [e for e in scene.entities \
             if e.name == 'voxel' or e.name == 'paint' \
             or e.name == 'beeper' or e.name == 'wall' \
@@ -284,7 +290,6 @@ class App(Ursina):
         self.karel = Karel(world_file, self.textures)
         self.world = self.karel.world
         self.setup_code()
-        self.karel.init_params()
         self.world.speed = self.speed_slider.value
         self.set_3d()
         self.update_prompt(f'Position : {vec2tup(self.karel.position)}; Direction: {self.karel.facing_to()}')
@@ -326,8 +331,37 @@ class App(Ursina):
 
         return world_state
 
+    def destroy_item(self) -> None:
+        '''
+        Destroys the item - voxel, beeper, paint - hovered by the mouse
+        Logic: You can only destroy the top of the stack
+        '''
+        if to_destroy := mouse.hovered_entity:
+            pos_to_destroy = to_destroy.position
+            self.destroy_sound.play()
+            if to_destroy == self.world.top_in_stack(pos_to_destroy):
+                if to_destroy.name == 'voxel':
+                    self.world.remove_voxel(pos_to_destroy)
+                elif to_destroy.name == 'beeper':
+                    self.world.remove_beeper(pos_to_destroy)
+                elif to_destroy.name == 'paint':
+                    self.world.remove_color(pos_to_destroy)
+                if vec2key(pos_to_destroy) == vec2key(self.karel.position):
+                    self.karel.update_z()
 
     def input(self, key) -> None:
+        '''
+        Handles user input:
+            - Agent movement: wasd or arrows keys
+            - Increase / Decrease speed: = / -
+            - Choose texture: 1 to 9
+            - Change camera: Page Up/ Page Down
+            - Run code: r
+            - Clear objects: c
+            - Emergency stop: escape
+            - Save world state: ctrl + s
+            - Destroy objects: left mouse or mouse1
+        '''
         if key == 'w' or key == 'a' or key == 's' or key == 'd' \
           or key == 'arrow_up' or key == 'arrow_down' \
           or key == 'arrow_left' or key == 'arrow_right':
@@ -362,6 +396,8 @@ class App(Ursina):
             sys.exit() # Manual mode
         elif key == 'control-s':
             self.save_world()
+        elif key == 'mouse1':
+            self.destroy_item()
         super().input(key)
 
     def karel_action_decorator(
@@ -484,8 +520,7 @@ class App(Ursina):
                 ' : Manual mode - Use WASD or Arrow keys to control agent'
             window.center_on_screen()
             base.win.requestProperties(window)
-            # self.run() # run the app for wasd/arrows exploration
-                         # not run() does not return, thus, use step() instead
+
             while True:
                 taskMgr.step()
                 if self.run_code:
