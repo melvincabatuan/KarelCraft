@@ -16,11 +16,14 @@ from karelcraft.entities.world import World
 from karelcraft.entities.karel import Karel
 from karelcraft.entities.voxel import Voxel
 from karelcraft.entities.cog_menu import CogMenu
+from karelcraft.entities.radial_menu import RadialMenu, RadialMenuButton
 from karelcraft.entities.file_browser_save import FileBrowserSave
 from karelcraft.entities.dropdown_menu import DropdownMenu, DropdownMenuButton
 from karelcraft.utils.helpers import vec2tup, vec2key, KarelException
 from karelcraft.utils.student_code import StudentCode
 from karelcraft.utils.world_loader import COLOR_LIST
+
+from direct.task.Task import Task
 
 import sys
 import webbrowser
@@ -49,6 +52,9 @@ class App(Ursina):
         self.init_prompt()
         self.setup_menu()
         self.setup_sound_lights_cam()
+        self.create_mode = 'voxel' # default
+        self.color_name  = random.choice(COLOR_LIST)
+        # self.setup_task_chain()
 
     def setup_texture(self):
         default_texture_path = Path(__file__).absolute().parent.parent / "assets/blocks"
@@ -83,23 +89,37 @@ class App(Ursina):
         EditorCamera(rotation_speed = 25) # lessen angle adjustment
         self.set_3d()
 
+    def setup_task_chain(self):
+        '''
+        Another task thread for UI elements
+        # TODO: separate UI thread
+        '''
+        taskMgr.setupTaskChain('ui_chain', numThreads = 1, tickClock = None,
+         frameBudget = -1, frameSync = False, timeslicePriority = False)
+
     def handle_view(self) -> None:
         if self.view_button.value[0] == '3D':
             self.set_3d()
         else:
             self.set_2d()
 
+    # def update_speed(self, task) -> None:
+    #     self.world.speed = self.speed_slider.value
+    #     return Task.done
+
     def handle_speed(self) -> None:
         self.world.speed = self.speed_slider.value
+        # taskMgr.add(self.update_speed, 'speed update task', taskChain = 'ui_chain')
 
     def setup_menu(self) -> None:
         window.cog_menu.enabled = False
         self.menu = CogMenu({
         'Save World State <gray>[ctrl+s]<default>': self.save_world,
-        'Change Texture <gray>[1 to 9]<default>'  : self.set_texture,
+        'Change Texture <gray>[0 to 9]<default>'  : self.set_texture,
         'Change Render Mode <gray>[F10]<default>' : window.next_render_mode,
-        'Camera 3D View <gray>[Page Up]<default>' : self.set_3d,
-        'Camera 2D View <gray>[Page Down]<default>' : self.set_2d,
+        'Camera 3D View <gray>[P/Page Up]<default>' : self.set_3d,
+        'Camera 2D View <gray>[P/Page Down]<default>' : self.set_2d,
+        'Select color'  : self.enable_color_menu,
         'Karelcraft Repo' : Func(webbrowser.open, 'https://github.com/melvincabatuan/KarelCraft'),
         })
         self.menu.on_click = Func(setattr, self.menu, 'enabled', False)
@@ -187,10 +207,30 @@ class App(Ursina):
             button_list.append(drop_button)
 
         world_dropdown = DropdownMenu('Load World',
-            buttons=tuple(button_list),
+            buttons=button_list,
             position=(0.52,0.48),
             eternal=True,
         )
+
+        # Color selector
+        radial_list = []
+        for k in COLOR_LIST:
+            color_button = RadialMenuButton(scale=.4, color=color.colors[k])
+            color_button.on_click = lambda k=k: self.change_color(k)
+            radial_list.append(color_button)
+
+        self.color_selector = RadialMenu(
+        buttons = (radial_list),
+        enabled = False,
+        eternal=True,
+        )
+
+    def enable_color_menu(self):
+        self.color_selector.enabled = True
+
+    def change_color(self, color_name):
+        self.color_name = color_name
+        self.color_selector.enabled = False
 
     def init_prompt(self) -> None:
         Text(TITLE,
@@ -349,6 +389,20 @@ class App(Ursina):
                 if vec2key(pos_to_destroy) == vec2key(self.karel.position):
                     self.karel.update_z()
 
+    def create_item(self) -> None:
+        '''
+        Create an item in agent's position
+        '''
+        if self.create_mode == 'voxel':
+            self.karel.put_block(self.block_texture)
+            # self.world.add_voxel(self.karel.position, self.block_texture)
+        elif self.create_mode == 'paint_color':
+            self.world.paint_corner(self.karel.position, self.color_name)
+        elif self.create_mode == 'beeper':
+            self.world.add_beeper(self.karel.position)
+        self.karel.update_z()
+
+
     def input(self, key) -> None:
         '''
         Handles user input:
@@ -387,17 +441,26 @@ class App(Ursina):
             self.set_3d()
         elif key == 'page_up':
             self.set_2d()
+        elif key == 'b': # beeper
+            self.create_mode = 'beeper'
+        elif key == 'backspace': # clear
+            self.clear_objects()
+        elif key == 'c': # paint color
+            self.create_mode = 'paint_color'
         elif key == 'r': # run student code
             self.set_run_code()
-        elif key == 'c': # clear
-            self.clear_objects()
+        elif key == 'v': # paint
+            self.create_mode = 'voxel'
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit() # Manual mode
         elif key == 'control-s':
             self.save_world()
-        elif key == 'mouse1':
+        elif key == 'mouse1': # left click
             self.destroy_item()
+        elif key == 'mouse3': # right click
+            self.create_item()
+
         super().input(key)
 
     def karel_action_decorator(
