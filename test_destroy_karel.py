@@ -7,13 +7,16 @@ MODE = 'beeper'
 # MODE, COLOR = 'paint', 'blue'
 # MODE = 'block'
 
+
 def turn_around():
     turn_left()
     turn_left()
 
+
 def turn_right():
     turn_around()
     turn_left()
+
 
 def install(mode):
     if mode == 'paint':
@@ -22,9 +25,10 @@ def install(mode):
     elif mode == 'block':
         if no_block_present():
             put_block()
-    else: # beeper is default
+    else:  # beeper is default
         if no_beepers_present():
             put_beeper()
+
 
 def destroy(mode):
     if mode == 'paint':
@@ -34,6 +38,7 @@ def destroy(mode):
     else:
         pick_beeper()
 
+
 def create_objects():
     while front_is_clear():
         install(MODE)
@@ -42,6 +47,7 @@ def create_objects():
             turn_left()
         if beeper_present() or color_present() or block_present():
             break
+
 
 def destroy_objects():
     while beeper_present() or color_present() or block_present():
@@ -56,8 +62,7 @@ def main():
     create_objects()
     turn_around()
     destroy_objects()
-    destroy(MODE) # test karel exceptions for all objects
-
+    destroy(MODE)  # test karel exceptions for all objects
 
 
 '''

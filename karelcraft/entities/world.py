@@ -9,9 +9,11 @@ from karelcraft.utils.direction import Direction
 from collections import defaultdict
 from typing import NamedTuple
 
+
 class Size(NamedTuple):
     col: int
     row: int
+
 
 class World(Entity):
 
@@ -21,20 +23,20 @@ class World(Entity):
 
     def __init__(self, world_file: str, textures: dict) -> None:
         super().__init__(
-            model    = 'quad',
-            parent   = scene,
-            color    = rgb(125, 125, 125),
+            model='quad',
+            parent=scene,
+            color=rgb(125, 125, 125),
         )
         self.world_loader = WorldLoader(world_file)
         self.textures = textures
-        self.size   = Size(self.world_loader.columns, self.world_loader.rows)
-        self.set_position((self.size.col/ 2, self.size.row/2, 0))
+        self.size = Size(self.world_loader.columns, self.world_loader.rows)
+        self.set_position((self.size.col / 2, self.size.row/2, 0))
         self.scale = Vec3(self.size.col, self.size.row, 0)
         self.create_grid()
         self.position_correction()
-        self.speed =  self.world_loader.init_speed
+        self.speed = self.world_loader.init_speed
         self.world_list = self.world_loader.available_worlds
-        self.stacks : dict[tuple[int, int], list]   = defaultdict(list)
+        self.stacks: dict[tuple[int, int], list] = defaultdict(list)
         self.load_beepers()
         self.load_paints()
         self.load_walls()
@@ -48,13 +50,13 @@ class World(Entity):
         '''
         self.world_position -= Vec3((0.5, 0.5, -0.01))
 
-    def create_grid(self, height = -0.001):
-        Entity(model = Grid(self.size.col, self.size.row, thickness=1.8),
-            scale = 1,
-            position = (self.origin.x, self.origin.y, height),
-            color = color.white,
-            parent = self
-        )
+    def create_grid(self, height=-0.001):
+        Entity(model=Grid(self.size.col, self.size.row, thickness=1.8),
+               scale=1,
+               position=(self.origin.x, self.origin.y, height),
+               color=color.white,
+               parent=self
+               )
 
     def load_beepers(self) -> None:
         for key, val in self.world_loader.beepers.items():
@@ -65,7 +67,7 @@ class World(Entity):
         self.walls = self.world_loader.walls
         for w in self.walls:
             wall_pos = Vec3(w.col, w.row, -1)
-            wall_object = Wall(position = wall_pos, direction = w.direction)
+            wall_object = Wall(position=wall_pos, direction=w.direction)
 
     def load_paints(self) -> None:
         for key, paint in self.world_loader.corner_colors.items():
@@ -76,7 +78,7 @@ class World(Entity):
         for key, item in self.world_loader.blocks.items():
             block_pos = Vec3(key[0], key[1], 0)
             for _ in range(item[1]):
-                self.add_voxel(block_pos, self.textures[item[0]] )
+                self.add_voxel(block_pos, self.textures[item[0]])
 
     def load_stacks(self) -> None:
         for key, stack_string in self.world_loader.stack_strings.items():
@@ -93,15 +95,16 @@ class World(Entity):
                     self.add_voxel(block_pos, self.textures[texture_name])
 
     def paint_corner(self, position, color_str) -> None:
-        self.remove_color(position) # no stacking of paints
+        self.remove_color(position)  # no stacking of paints
         key = vec2key(position)
-        paint_pos = self.top_position(position) + Vec3(0, 0, - self.GROUND_OFFSET)
+        paint_pos = self.top_position(
+            position) + Vec3(0, 0, - self.GROUND_OFFSET)
         paint = Paint(paint_pos, color_str)
         paint.tooltip = Tooltip(f'Paint@{vec2tup(position)}: {color_str}')
         self.stacks[key].append(paint)
 
     def remove_color(self, position) -> None:
-        if top := self.top_in_stack(position):
+        if top:= self.top_in_stack(position):
             if top.name == 'paint':
                 item = self.stacks[vec2key(position)].pop()
                 destroy(item, 1 - self.speed)
@@ -116,7 +119,7 @@ class World(Entity):
         else return None for no paint
         Stack logic: Karel can only access the topmost object/entity
         '''
-        if top := self.top_in_stack(position):
+        if top:= self.top_in_stack(position):
             if top.name == 'paint':
                 return top.color.name
         return None
@@ -129,16 +132,17 @@ class World(Entity):
 
     def add_beeper(self, position) -> int:
         key = vec2key(position)
-        beeper_pos = self.top_position(position) + Vec3(0, 0, - self.GROUND_OFFSET)
+        beeper_pos = self.top_position(
+            position) + Vec3(0, 0, - self.GROUND_OFFSET)
         idx = self.count_beepers(key)
-        beeper = Beeper(position = beeper_pos, num_beepers = idx + 1)
+        beeper = Beeper(position=beeper_pos, num_beepers=idx + 1)
         self.stacks[key].append(beeper)
         return idx + 1
 
     def remove_beeper(self, position) -> int:
         key = vec2key(position)
         beepers_in_stack = self.count_beepers(key)
-        if top := self.top_in_stack(position):
+        if top:= self.top_in_stack(position):
             if top.name == 'beeper':
                 item = self.stacks[key].pop()
                 destroy(item, 1 - self.speed)
@@ -147,22 +151,23 @@ class World(Entity):
 
     def add_voxel(self, position, texture) -> None:
         key = vec2key(position)
-        block_pos = self.top_position(position) + Vec3(0, 0, - self.GROUND_OFFSET)
-        voxel = Voxel(position = block_pos, texture  = texture)
+        block_pos = self.top_position(
+            position) + Vec3(0, 0, - self.GROUND_OFFSET)
+        voxel = Voxel(position=block_pos, texture=texture)
         texture_name = texture.name.split('.')[0]
         position.z = abs(position.z)
         voxel.tooltip = Tooltip(f'Block@{vec2tup(position)}: {texture_name}')
         self.stacks[key].append(voxel)
 
     def remove_voxel(self, position) -> None:
-        if top := self.top_in_stack(position):
+        if top:= self.top_in_stack(position):
             if top.name == 'voxel':
                 item = self.stacks[vec2key(position)].pop()
                 destroy(item, 1 - self.speed)
 
     def is_inside(self, position) -> bool:
         return -0.50 < position[0] < self.size.col - 0.5 \
-           and -0.50 < position[1] < self.size.row - 0.5
+            and -0.50 < position[1] < self.size.row - 0.5
 
     def top_in_stack(self, position) -> Button:
         item_stack = self.stacks.get(vec2key(position), [])
@@ -172,11 +177,11 @@ class World(Entity):
             return None
 
     def top_position(self, position) -> None:
-        if top := self.top_in_stack(position):
+        if top:= self.top_in_stack(position):
             if top.name == 'voxel':
-                return top.position + Vec3(0,0, self.GROUND_OFFSET - self.VOXEL_OFFSET_Z)
+                return top.position + Vec3(0, 0, self.GROUND_OFFSET - self.VOXEL_OFFSET_Z)
             if top.name == 'beeper' or top.name == 'paint':
-                return top.position + Vec3(0,0, self.GROUND_OFFSET - self.BEEPER_OFFSET_Z)
+                return top.position + Vec3(0, 0, self.GROUND_OFFSET - self.BEEPER_OFFSET_Z)
         return Vec3(position[0], position[1], self.GROUND_OFFSET)
 
     def wall_exists(self, position, direction) -> bool:
@@ -187,8 +192,8 @@ class World(Entity):
         return False
 
     def get_center(self) -> tuple:
-        x_center = self.scale.x // 2 if self.scale.x%2 else self.scale.x // 2 - 0.5
-        y_center = self.scale.y // 2 if self.scale.y%2 else self.scale.y // 2 - 0.5
+        x_center = self.scale.x // 2 if self.scale.x % 2 else self.scale.x // 2 - 0.5
+        y_center = self.scale.y // 2 if self.scale.y % 2 else self.scale.y // 2 - 0.5
         return (x_center, y_center)
 
     def get_maxside(self) -> int:
@@ -210,7 +215,8 @@ class World(Entity):
         return self.same_type(key, Paint)
 
     def all_same_blocks(self, key) -> tuple:
-        is_same_texture = len(set(i.texture for i in self.stacks.get(key, []))) == 1
+        is_same_texture = len(
+            set(i.texture for i in self.stacks.get(key, []))) == 1
         return self.same_type(key, Voxel) and is_same_texture
 
     def same_type(self, key, object_type) -> bool:

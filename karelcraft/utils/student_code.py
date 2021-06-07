@@ -4,12 +4,14 @@ import importlib.util
 
 from karelcraft.entities.karel import Karel
 
+
 class StudentCode:
     """
     This process extracts a module from an arbitary file that contains student code.
     https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
     (Credits: stanford.karel module)
     """
+
     def __init__(self, code_file: Path) -> None:
         if not code_file.is_file():
             raise FileNotFoundError(f"{code_file} could not be found.")

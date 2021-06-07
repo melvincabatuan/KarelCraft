@@ -395,11 +395,16 @@ class App(Ursina):
         '''
         if self.create_mode == 'voxel':
             self.karel.put_block(self.block_texture)
+            agent_action = 'put_block() => ' + self.texture_name
+            self.update_prompt(agent_action)
             # self.world.add_voxel(self.karel.position, self.block_texture)
         elif self.create_mode == 'paint_color':
-            self.world.paint_corner(self.karel.position, self.color_name)
+            self.karel.paint_corner(self.color_name)
+            agent_action = 'paint_corner() => ' + self.color_name
+            # self.world.paint_corner(self.karel.position, self.color_name)
         elif self.create_mode == 'beeper':
             self.world.add_beeper(self.karel.position)
+            agent_action = 'add_beeper() => '
         self.karel.update_z()
 
 
@@ -460,7 +465,6 @@ class App(Ursina):
             self.destroy_item()
         elif key == 'mouse3': # right click
             self.create_item()
-
         super().input(key)
 
     def karel_action_decorator(

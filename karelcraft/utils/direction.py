@@ -3,10 +3,10 @@ from enum import Enum, unique
 
 @unique
 class Direction(Enum):
-    EAST     = (1, 0, 0)
-    SOUTH    = (0, -1, 0)
-    WEST     = (-1, 0, 0)
-    NORTH    = (0, 1, 0)
+    EAST = (1, 0, 0)
+    SOUTH = (0, -1, 0)
+    WEST = (-1, 0, 0)
+    NORTH = (0, 1, 0)
 
     def __lt__(self, other: object) -> bool:
         if isinstance(other, Direction):
@@ -17,7 +17,7 @@ class Direction(Enum):
         return str(self.value)
 
     @staticmethod
-    def rotate90(direction, mode = 'clockwise'):
+    def rotate90(direction, mode='clockwise'):
         NEXT_NWSE = {
             Direction.NORTH: Direction.WEST,
             Direction.WEST:  Direction.SOUTH,

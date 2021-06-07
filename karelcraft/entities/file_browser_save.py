@@ -11,17 +11,17 @@ class FileBrowserSave(FileBrowser):
         self.save_button.text = 'Save'
         self.save_button.on_click = self.save
         self.file_name_field = InputField(
-            parent = self,
-            scale_x = .75,
-            scale_y = self.save_button.scale_y,
-            y = self.save_button.y,
-            active = True,
-            )
+            parent=self,
+            scale_x=.75,
+            scale_y=self.save_button.scale_y,
+            y=self.save_button.y,
+            active=True,
+        )
         # self.file_name_field.text_field.scale *= .6
         self.save_button.y -= .075
         self.cancel_button.y -= .075
         self.file_name_field.text_field.text = ''
-        self.file_type = '' # to save as
+        self.file_type = ''  # to save as
 
         self.data = ''
         self.last_saved_file = None     # gets set when you save a file
@@ -36,9 +36,7 @@ class FileBrowserSave(FileBrowser):
             enabled=False)
 
         for key, value in kwargs.items():
-            setattr(self, key ,value)
-
-
+            setattr(self, key, value)
 
     def save(self):
         file_name = self.file_name_field.text_field.text
@@ -61,5 +59,3 @@ class FileBrowserSave(FileBrowser):
             self.last_saved_file = path
             self.overwrite_prompt.enabled = False
             self.close()
-
-

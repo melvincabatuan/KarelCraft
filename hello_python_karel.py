@@ -144,7 +144,6 @@ Drill 1-0 a) Install stanfordkarel module by running the ff. in
 ========================================================================
 '''
 
-from karelcraft.karelcraft import *
 
 # def main():
 #   '''
@@ -162,9 +161,6 @@ from karelcraft.karelcraft import *
 
 # if __name__=="__main__":
 #   run_karel_program()
-
-
-
 
 
 r'''
@@ -301,20 +297,25 @@ Drill 1-1 a) Write a Karel helper function to make Karel turn right.
 '''
 
 
+
+
+import random
+from karelcraft.karelcraft import *
 def turn_right():
-  '''
-  Makes Karel turn right
-  '''
-  turn_left()
-  turn_left()
-  turn_left()
+    '''
+    Makes Karel turn right
+    '''
+    turn_left()
+    turn_left()
+    turn_left()
+
 
 def turn_around():
-  '''
-  Makes Karel turn around
-  '''
-  turn_left()
-  turn_left()
+    '''
+    Makes Karel turn around
+    '''
+    turn_left()
+    turn_left()
 
 # def main():
 #   '''
@@ -328,7 +329,6 @@ def turn_around():
 
 # if __name__ == "__main__":
 #   run_karel_program()
-
 
 
 r'''                                       _  _  _    _
@@ -379,14 +379,14 @@ Drill 1-2 Write a Karel helper function to put beepers in the row
 
 
 def put_beeper_line():
-  '''
-  Pre: Karel at initial state (1,1) and facing East with infinite beepers
-  Post: Beepers will completely fill a certain row
-  '''
-  while front_is_clear():
+    '''
+    Pre: Karel at initial state (1,1) and facing East with infinite beepers
+    Post: Beepers will completely fill a certain row
+    '''
+    while front_is_clear():
+        put_beeper()
+        move()
     put_beeper()
-    move()
-  put_beeper()
 
 # def main():
 #   put_beeper_line()
@@ -394,11 +394,6 @@ def put_beeper_line():
 
 # if __name__ == "__main__":
 #   run_karel_program()
-
-
-
-
-
 
 
 r'''
@@ -437,36 +432,38 @@ Drill 1-3 Write a Karel helper function to solve the collect newspaper
 # YOUR CODE HERE
 
 def go_to_door():
-  '''
-  pre: Karel at initial position
-  post: Karel at the position of newspaper
-  '''
-  move()
-  move()
-  turn_right()
-  move()
-  turn_left()
-  move()
+    '''
+    pre: Karel at initial position
+    post: Karel at the position of newspaper
+    '''
+    move()
+    move()
+    turn_right()
+    move()
+    turn_left()
+    move()
+
 
 def pick_newspaper():
-  '''
-  pre: Karel at beeper position with beeper present
-  post:Karel at beeper position without the beeper in the corner
-  '''
-  pick_beeper()
+    '''
+    pre: Karel at beeper position with beeper present
+    post:Karel at beeper position without the beeper in the corner
+    '''
+    pick_beeper()
+
 
 def go_back_to_house():
-  '''
-  pre: Karel at beeper position without the beeper in the corner
-  post: Karel is back to initial position
-  '''
-  turn_around()
-  move()
-  move()
-  move()
-  turn_right()
-  move()
-  turn_right()
+    '''
+    pre: Karel at beeper position without the beeper in the corner
+    post: Karel is back to initial position
+    '''
+    turn_around()
+    move()
+    move()
+    move()
+    turn_right()
+    move()
+    turn_right()
 
 
 # def main():
@@ -479,15 +476,8 @@ def go_back_to_house():
 #   go_back_to_house()
 
 
-
 # if __name__ == '__main__':
 #   run_karel_program('collect_newspaper_karel')
-
-
-
-
-
-
 
 
 r'''
@@ -502,16 +492,16 @@ Drill 1-4 Write a Karel helper function to install beepers in the
 
 
 def install_beepers():
-  '''
-  pre: Initial Karel satate at (1,1) facing east (empty world)
-  post: The perimeter is filled with beepers
-  '''
-  while front_is_clear() and no_beeper_present():
+    '''
+    pre: Initial Karel satate at (1,1) facing east (empty world)
+    post: The perimeter is filled with beepers
+    '''
+    while front_is_clear() and no_beeper_present():
+        put_beeper()
+        move()
+        if front_is_blocked():
+            turn_left()
     put_beeper()
-    move()
-    if front_is_blocked():
-      turn_left()
-  put_beeper()
 
 
 # def main():
@@ -520,9 +510,6 @@ def install_beepers():
 
 # if __name__ == "__main__":
 #   run_karel_program()
-
-
-
 
 
 r'''
@@ -540,18 +527,16 @@ Drill 1-5 Write a Karel helper function to paint the perimeter 'Green'.
 '''
 
 
-
 def paint_perimeter():
-  '''
-  pre: Initial Karel satate at (1,1) facing east (empty world)
-  post: The perimeter is filled with beepers
-  '''
-  while front_is_clear() and not color_present():
-    paint_corner('green')
-    move()
-    if front_is_blocked():
-      turn_left()
-
+    '''
+    pre: Initial Karel satate at (1,1) facing east (empty world)
+    post: The perimeter is filled with beepers
+    '''
+    while front_is_clear() and not color_present():
+        paint_corner('green')
+        move()
+        if front_is_blocked():
+            turn_left()
 
 
 # def main():
@@ -562,8 +547,6 @@ def paint_perimeter():
 #   run_karel_program()
 
 
-
-
 r'''
 ========================================================================
 Drill 1-6 Write a Karel helper function to create an ascending staircase
@@ -572,55 +555,56 @@ Drill 1-6 Write a Karel helper function to create an ascending staircase
 ========================================================================
 '''
 
+
 def put_block_line():
-  '''
-  Pre: Karel at initial state (1,1) and facing East with infinite beepers
-  Post: Beepers will completely fill a certain row
-  '''
-  while front_is_clear():
+    '''
+    Pre: Karel at initial state (1,1) and facing East with infinite beepers
+    Post: Beepers will completely fill a certain row
+    '''
+    while front_is_clear():
+        put_block()
+        move()
     put_block()
-    move()
-  put_block()
 
 
 def go_to_wall():
-  '''
-  pre: Karel is anywhere inside the world
-  post:Karel will be located at the front of the wall its facing
-  '''
-  while front_is_clear():
-    move()
+    '''
+    pre: Karel is anywhere inside the world
+    post:Karel will be located at the front of the wall its facing
+    '''
+    while front_is_clear():
+        move()
+
 
 def go_to_next_step(step):
-  '''
-  pre: Karel is facing the wall to West
-  post: Karel is in the next step facing East
-  '''
-  turn_right()
-  move()
-  turn_right()
-  for i in range(step):
-    if front_is_clear():
-      move()
+    '''
+    pre: Karel is facing the wall to West
+    post: Karel is in the next step facing East
+    '''
+    turn_right()
+    move()
+    turn_right()
+    for i in range(step):
+        if front_is_clear():
+            move()
 
 
 def staircase():
-  '''
-  Pre: Karel at initial position, facing East (empty world)
-  Post: Beepers in staircase pattern (Karel position not important)
-  '''
-  step = 1
-  while left_is_clear() and front_is_clear():
+    '''
+    Pre: Karel at initial position, facing East (empty world)
+    Post: Beepers in staircase pattern (Karel position not important)
+    '''
+    step = 1
+    while left_is_clear() and front_is_clear():
+        put_block_line()
+        # put_beeper_line()
+        turn_around()
+        go_to_wall()
+        go_to_next_step(step)
+        step += 1
+
+    # put_beeper_line() # handles fencepost error
     put_block_line()
-    # put_beeper_line()
-    turn_around()
-    go_to_wall()
-    go_to_next_step(step)
-    step += 1
-
-  # put_beeper_line() # handles fencepost error
-  put_block_line()
-
 
 
 # def main():
@@ -629,11 +613,6 @@ def staircase():
 
 # if __name__ == "__main__":
 #   run_karel_program()
-
-
-
-
-
 
 
 r'''
@@ -650,50 +629,52 @@ colors = ["Red","Black","Cyan","Dark Gray", \
 ]
 ========================================================================
 '''
-import random
+
 
 def get_color():
-  '''
-  Returns a random color
-  '''
-  colors = ["red","black","cyan","white", \
-    "smoke", "green", "light_gray", "magenta", \
-    "orange", "pink",  "blue","yellow", "lime", \
-    "turquoise", "azure", "violet", "brown", \
-    "olive", "peach", "gold", "salmon"
-    ]
-  # colors = ["Red","Black","Cyan","Dark Gray", \
-  #   "Gray", "Green", "Light Gray", "Magenta", \
-  #   "Orange", "Pink",  "Blue","Yellow", # "White",
-  # ]
-  return random.choice(colors)
+    '''
+    Returns a random color
+    '''
+    colors = ["red", "black", "cyan", "white",
+              "smoke", "green", "light_gray", "magenta",
+              "orange", "pink",  "blue", "yellow", "lime",
+              "turquoise", "azure", "violet", "brown",
+              "olive", "peach", "gold", "salmon"
+              ]
+    # colors = ["Red","Black","Cyan","Dark Gray", \
+    #   "Gray", "Green", "Light Gray", "Magenta", \
+    #   "Orange", "Pink",  "Blue","Yellow", # "White",
+    # ]
+    return random.choice(colors)
+
 
 def put_line():
-  '''
-  Put colors to a row
-  '''
-  while front_is_clear():
+    '''
+    Put colors to a row
+    '''
+    while front_is_clear():
+        rand_color = get_color()
+        paint_corner(rand_color)
+        move()
+
     rand_color = get_color()
     paint_corner(rand_color)
-    move()
 
-  rand_color = get_color()
-  paint_corner(rand_color)
 
 def color_staircase():
-  '''
-  Pre: Karel at initial position, facing East (empty world)
-  Post: Beepers in staircase pattern (Karel position not important)
-  '''
-  step = 1
-  while left_is_clear() and front_is_clear():
-    put_line()
-    turn_around()
-    go_to_wall()
-    go_to_next_step(step)
-    step += 1
+    '''
+    Pre: Karel at initial position, facing East (empty world)
+    Post: Beepers in staircase pattern (Karel position not important)
+    '''
+    step = 1
+    while left_is_clear() and front_is_clear():
+        put_line()
+        turn_around()
+        go_to_wall()
+        go_to_next_step(step)
+        step += 1
 
-  put_line() # handles fencepost error
+    put_line()  # handles fencepost error
 
 
 # def main():
@@ -702,8 +683,6 @@ def color_staircase():
 
 # if __name__ == "__main__":
 #   run_karel_program()
-
-
 
 
 r'''
@@ -717,14 +696,6 @@ Drill 1-8 Write a Karel helper function to create an descending staircase
 # YOUR CODE HERE
 
 
-
-
-
-
-
-
-
-
 r'''
 ========================================================================
 Drill 1-8 Write a Karel helper function to create an descending staircase
@@ -736,15 +707,6 @@ Drill 1-8 Write a Karel helper function to create an descending staircase
 # YOUR CODE HERE
 
 
-
-
-
-
-
-
-
-
-
 r'''
 ========================================================================
 Drill 1-9 Write a Karel helper function to create a pyramid pattern
@@ -753,42 +715,44 @@ Drill 1-9 Write a Karel helper function to create a pyramid pattern
 ========================================================================
 '''
 
+
 def put_color_line(n):
-  '''
-  Put colors to a n squares in a row
-  '''
-  for _ in range(n):
-    paint_corner(get_color())
-    move()
+    '''
+    Put colors to a n squares in a row
+    '''
+    for _ in range(n):
+        paint_corner(get_color())
+        move()
+
 
 def pyramid():
-  '''
-  Pre: Initial Karel world
-  Post: Pyramid of colors (built from bottom to top)
-  '''
+    '''
+    Pre: Initial Karel world
+    Post: Pyramid of colors (built from bottom to top)
+    '''
     # Install base layer and measure the width base
-  width = 1
-  while front_is_clear():
-    paint_corner(get_color())
-    move()
-    width += 1
-    print(right_is_clear())
+    width = 1
+    while front_is_clear():
+        paint_corner(get_color())
+        move()
+        width += 1
+        print(right_is_clear())
 
-  rand_color = get_color()
-  paint_corner(rand_color)
-  turn_around()
-  go_to_wall()
-
-  # Installation of the rest of the levels: 2 - onward
-  step = 1
-  while right_is_clear() and width > 0:
-    go_to_next_step(step)
-
-    width -= 2
-    put_color_line(width)
+    rand_color = get_color()
+    paint_corner(rand_color)
     turn_around()
     go_to_wall()
-    step += 1
+
+    # Installation of the rest of the levels: 2 - onward
+    step = 1
+    while right_is_clear() and width > 0:
+        go_to_next_step(step)
+
+        width -= 2
+        put_color_line(width)
+        turn_around()
+        go_to_wall()
+        step += 1
 
 
 # def main():
@@ -797,12 +761,6 @@ def pyramid():
 
 # if __name__ == "__main__":
 #   run_karel_program()
-
-
-
-
-
-
 
 
 r'''
@@ -814,43 +772,47 @@ Drill 1-10 Write a Karel program to create a random color pattern
 '''
 
 # YOUR CODE HERE
+
+
 def handle_column_world():
-  '''
-  Handles 1x1 or vertical worlds
-  '''
-  turn_left()
-  while front_is_clear():
+    '''
+    Handles 1x1 or vertical worlds
+    '''
+    turn_left()
+    while front_is_clear():
+        paint_corner(get_color())
+        move()
     paint_corner(get_color())
-    move()
-  paint_corner(get_color())
+
 
 def handle_bigger_worlds():
-  '''
-  Handles world with > 2 width
-  '''
-  while front_is_clear():
-    paint_corner(get_color())
-    move()
-
-    if front_is_blocked() and facing_east():
-      paint_corner(get_color())
-      turn_left()
-      if front_is_clear():
+    '''
+    Handles world with > 2 width
+    '''
+    while front_is_clear():
+        paint_corner(get_color())
         move()
-        turn_left()
 
-    if front_is_blocked() and facing_west():
-      paint_corner(get_color())
-      turn_right()
-      if front_is_clear():
-        move()
-        turn_right()
+        if front_is_blocked() and facing_east():
+            paint_corner(get_color())
+            turn_left()
+            if front_is_clear():
+                move()
+                turn_left()
+
+        if front_is_blocked() and facing_west():
+            paint_corner(get_color())
+            turn_right()
+            if front_is_clear():
+                move()
+                turn_right()
+
 
 def random_coloring():
-  if front_is_blocked():
-    handle_column_world()
-  else:
-    handle_bigger_worlds()
+    if front_is_blocked():
+        handle_column_world()
+    else:
+        handle_bigger_worlds()
 
 
 # def main():
@@ -861,11 +823,6 @@ def random_coloring():
 #   run_karel_program()
 
 
-
-
-
-
-
 r'''
 ========================================================================
 Drill 1-11 Write a Karel program to create rectangular layers of color.
@@ -874,63 +831,66 @@ Drill 1-11 Write a Karel program to create rectangular layers of color.
 ========================================================================
 '''
 
+
 def outer_layer():
-  '''
-  Pre: Karel at initial position
-  Post: Karel colors the perimeter
-  '''
-  color = get_color()
-  while front_is_clear() and no_color_present():
-    paint_corner(color)
-    move()
-    if front_is_blocked():
-      turn_left()
-
-def move_inward():
-  '''
-  pre: Karel at initial position (facing East) with colored perimeter
-  post: Karel moves into the inner layer
-  '''
-  move()
-  turn_left()
-  move()
-  turn_right()
-
-def step_back():
-  '''
-  Move one step back
-  '''
-  turn_around()
-  move()
-  turn_around()
-
-def inner_layers():
-  while no_color_present():
+    '''
+    Pre: Karel at initial position
+    Post: Karel colors the perimeter
+    '''
     color = get_color()
-    for _ in range(4): # Color the layer corners
-      while no_color_present():
+    while front_is_clear() and no_color_present():
         paint_corner(color)
         move()
-        if color_present():
-          step_back()
-          turn_left()
-      if front_is_clear():
-        move()
+        if front_is_blocked():
+            turn_left()
+
+
+def move_inward():
+    '''
+    pre: Karel at initial position (facing East) with colored perimeter
+    post: Karel moves into the inner layer
+    '''
+    move()
+    turn_left()
+    move()
+    turn_right()
+
+
+def step_back():
+    '''
+    Move one step back
+    '''
+    turn_around()
+    move()
+    turn_around()
+
+
+def inner_layers():
+    while no_color_present():
+        color = get_color()
+        for _ in range(4):  # Color the layer corners
+            while no_color_present():
+                paint_corner(color)
+                move()
+                if color_present():
+                    step_back()
+                    turn_left()
+            if front_is_clear():
+                move()
+
 
 def rainbow_layers():
-  outer_layer()
-  move_inward()
-  inner_layers()
+    outer_layer()
+    move_inward()
+    inner_layers()
+
 
 def main():
-  rainbow_layers()
+    rainbow_layers()
 
 
 if __name__ == "__main__":
-  run_karel_program()
-
-
-
+    run_karel_program()
 
 
 r'''
@@ -942,43 +902,47 @@ Drill 1-12 Write a Karel program to create a random blocks
 '''
 
 # YOUR CODE HERE
+
+
 def handle_column_world():
-  '''
-  Handles 1x1 or vertical worlds
-  '''
-  turn_left()
-  while front_is_clear():
+    '''
+    Handles 1x1 or vertical worlds
+    '''
+    turn_left()
+    while front_is_clear():
+        put_block()
+        move()
     put_block()
-    move()
-  put_block()
+
 
 def handle_bigger_worlds():
-  '''
-  Handles world with > 2 width
-  '''
-  while front_is_clear():
-    put_block()
-    move()
-
-    if front_is_blocked() and facing_east():
-      put_block()
-      turn_left()
-      if front_is_clear():
+    '''
+    Handles world with > 2 width
+    '''
+    while front_is_clear():
+        put_block()
         move()
-        turn_left()
 
-    if front_is_blocked() and facing_west():
-      put_block()
-      turn_right()
-      if front_is_clear():
-        move()
-        turn_right()
+        if front_is_blocked() and facing_east():
+            put_block()
+            turn_left()
+            if front_is_clear():
+                move()
+                turn_left()
+
+        if front_is_blocked() and facing_west():
+            put_block()
+            turn_right()
+            if front_is_clear():
+                move()
+                turn_right()
+
 
 def random_blocks():
-  if front_is_blocked():
-    handle_column_world()
-  else:
-    handle_bigger_worlds()
+    if front_is_blocked():
+        handle_column_world()
+    else:
+        handle_bigger_worlds()
 
 
 # def main():

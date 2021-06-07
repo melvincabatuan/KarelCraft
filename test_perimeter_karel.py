@@ -3,15 +3,18 @@
 from karelcraft.karelcraft import *
 from enum import Enum
 
+
 class Mode(Enum):
-    block  = 1
+    block = 1
     beeper = 2
-    paint  = 3
+    paint = 3
+
 
 # Set the item to put in corner
 # mode = Mode.beeper
 # mode = Mode.paint
 mode = Mode.block
+
 
 def main():
     """ Your code goes here! """
@@ -33,6 +36,7 @@ def main():
         if block_present() or beeper_present() or color_present():
             print("Perimeter done...")
             break
+
 
 if __name__ == "__main__":
     run_karel_program()

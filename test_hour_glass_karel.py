@@ -4,14 +4,17 @@ from karelcraft.karelcraft import *
 # MODE, COLOR = 'paint', 'cyan'
 MODE = 'block'
 
+
 def look(direction, condition):
     while not condition():
         turn_left()
+
 
 def move_forward(steps):
     for _ in range(steps):
         if front_is_clear():
             move()
+
 
 def get_width():
     count = 0
@@ -20,13 +23,16 @@ def get_width():
         count += 1
     return(count)
 
+
 def move_to_wall():
     while(front_is_clear()):
         move()
 
+
 def install_a_beeper():
     if no_beepers_present():
         put_beeper()
+
 
 def install(mode):
     if mode == 'paint':
@@ -39,6 +45,7 @@ def install(mode):
         if no_beepers_present():
             put_beeper()
 
+
 def go_to_upper_base(width):
     if width % 2 == 0:
         install(MODE)
@@ -48,7 +55,9 @@ def go_to_upper_base(width):
     move_to_wall()
 
 # DRY Principle: Don't Repeat Yourself
-def install_triangle(width, is_bottom = True):
+
+
+def install_triangle(width, is_bottom=True):
     for i in range(width, 0, -2):
         for _ in range(i):
             look("west", facing_west)
@@ -70,7 +79,7 @@ def main():
     width = get_width()
     install_triangle(width)
     go_to_upper_base(width)
-    install_triangle(width, is_bottom = False)
+    install_triangle(width, is_bottom=False)
 
 
 if __name__ == "__main__":

@@ -3,22 +3,25 @@
 from karelcraft.karelcraft import *
 from enum import Enum
 
+
 class Mode(Enum):
-    block  = 1
+    block = 1
     beeper = 2
-    paint  = 3
+    paint = 3
+
 
 # Set the item to put in corner
 # mode = Mode.beeper
 # mode = Mode.paint
 mode = Mode.block
 
+
 def turn_around():
     turn_left()
     turn_left()
 
-def main():
 
+def main():
     """ Your code goes here! """
     while front_is_clear():
         if mode == Mode.block:
@@ -47,23 +50,22 @@ def main():
     # Test exceptions:
     if mode == Mode.block:
         destroy_block()
-        destroy_block() # Should return an exception
+        destroy_block()  # Should return an exception
 
     elif mode == Mode.beeper:
         pick_beeper()
-        pick_beeper() # Should return an exception
+        pick_beeper()  # Should return an exception
 
     elif mode == Mode.paint:
         remove_paint()
-        remove_paint() # Should return an exception
+        remove_paint()  # Should return an exception
+
 
 '''
 Note: Ursina collider presents inconsistent results
 e.g. detection is ok at low speed x <= 0.8 but
 doesn't detect if speed is greater.
 '''
-
-
 
 
 if __name__ == "__main__":

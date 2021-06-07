@@ -5,37 +5,38 @@ from karelcraft.utils.direction import Direction
 from karelcraft.entities.world import World
 from karelcraft.utils.helpers import vec2key
 
+
 class Karel(Button):
 
     def __init__(self,
-        world_file: str,
-        textures: dict,
-        ) -> None:
+                 world_file: str,
+                 textures: dict,
+                 ) -> None:
         super().__init__(
-        parent   = scene,
-        color    = color.white66,
-        model    = 'assets/block', #'sphere',
-        texture  = 'assets/karel_block',
-        rotation = Vec3(90,90,90),
-        scale = 0.48,
+            parent=scene,
+            color=color.white66,
+            model='assets/block',  # 'sphere',
+            texture='assets/karel_block',
+            rotation=Vec3(90, 90, 90),
+            scale=0.48,
         )
         self.directions = {'a': Direction.WEST,
                            'd': Direction.EAST,
                            'w': Direction.NORTH,
                            's': Direction.SOUTH,
-                    'arrow_up': Direction.NORTH,
-                  'arrow_down': Direction.SOUTH,
-                  'arrow_left': Direction.WEST,
-                 'arrow_right': Direction.EAST,
-                 }
+                           'arrow_up': Direction.NORTH,
+                           'arrow_down': Direction.SOUTH,
+                           'arrow_left': Direction.WEST,
+                           'arrow_right': Direction.EAST,
+                           }
         self.world_file = world_file
-        self.textures   = textures
+        self.textures = textures
         self.init_params()
 
     def init_params(self):
-        self.world     = World(self.world_file, self.textures)
+        self.world = World(self.world_file, self.textures)
         key = self.world.world_loader.start_location
-        self.position  = Vec3(key + (self.world.top_position(key)[-1],))
+        self.position = Vec3(key + (self.world.top_position(key)[-1],))
         self.direction = self.world.world_loader.start_direction
         self.face2direction()
         self.start_beeper_count = self.world.world_loader.start_beeper_count
@@ -64,7 +65,7 @@ class Karel(Button):
                 "ERROR: Karel attempted to move(), but its front was not clear!",
             )
         self.position += self.direction.value
-        self.position = self.world.top_position(self.position) # depth
+        self.position = self.world.top_position(self.position)  # depth
 
     def facing_east(self) -> bool:
         return self.direction.name == 'EAST'
@@ -97,18 +98,19 @@ class Karel(Button):
             self.rotation_x = 360
         elif self.direction.name == 'WEST':
             self.rotation_x = 270
-        else: # 'EAST'
+        else:  # 'EAST'
             self.rotation_x = 90
 
     def turn_left(self) -> None:
         self.direction = Direction.rotate90(self.direction)
         self.face2direction()
-        self.position = self.world.top_position(self.position) # depth
+        self.position = self.world.top_position(self.position)  # depth
 
     def direction_is_clear(self, direction) -> bool:
         is_wall = self.world.wall_exists(self.position, direction)
         new_position = self.position + direction.value
-        is_wall += self.world.wall_exists(new_position, Direction.opposite(direction))
+        is_wall += self.world.wall_exists(new_position,
+                                          Direction.opposite(direction))
         return self.world.is_inside(new_position) and not is_wall
 
     def front_is_clear(self) -> bool:
