@@ -30,7 +30,7 @@ class World(Entity):
         self.world_loader = WorldLoader(world_file)
         self.textures = textures
         self.size = Size(self.world_loader.columns, self.world_loader.rows)
-        self.set_position((self.size.col / 2, self.size.row/2, 0))
+        self.set_position((self.size.col / 2, self.size.row / 2, 0))
         self.scale = Vec3(self.size.col, self.size.row, 0)
         self.create_grid()
         self.position_correction()
@@ -104,7 +104,7 @@ class World(Entity):
         self.stacks[key].append(paint)
 
     def remove_color(self, position) -> None:
-        if top:= self.top_in_stack(position):
+        if top := self.top_in_stack(position):
             if top.name == 'paint':
                 item = self.stacks[vec2key(position)].pop()
                 destroy(item, 1 - self.speed)
@@ -119,7 +119,7 @@ class World(Entity):
         else return None for no paint
         Stack logic: Karel can only access the topmost object/entity
         '''
-        if top:= self.top_in_stack(position):
+        if top := self.top_in_stack(position):
             if top.name == 'paint':
                 return top.color.name
         return None
@@ -142,17 +142,17 @@ class World(Entity):
     def remove_beeper(self, position) -> int:
         key = vec2key(position)
         beepers_in_stack = self.count_beepers(key)
-        if top:= self.top_in_stack(position):
+        if top := self.top_in_stack(position):
             if top.name == 'beeper':
                 item = self.stacks[key].pop()
                 destroy(item, 1 - self.speed)
                 beepers_in_stack -= 1
         return beepers_in_stack
 
-    def add_voxel(self, position, texture) -> None:
+    def add_voxel(self, position, texture_name) -> None:
         key = vec2key(position)
-        block_pos = self.top_position(
-            position) + Vec3(0, 0, - self.GROUND_OFFSET)
+        block_pos = self.top_position(position) + Vec3(0, 0, - self.GROUND_OFFSET)
+        texture = self.textures[texture_name]
         voxel = Voxel(position=block_pos, texture=texture)
         texture_name = texture.name.split('.')[0]
         position.z = abs(position.z)
@@ -160,7 +160,7 @@ class World(Entity):
         self.stacks[key].append(voxel)
 
     def remove_voxel(self, position) -> None:
-        if top:= self.top_in_stack(position):
+        if top := self.top_in_stack(position):
             if top.name == 'voxel':
                 item = self.stacks[vec2key(position)].pop()
                 destroy(item, 1 - self.speed)
@@ -177,7 +177,7 @@ class World(Entity):
             return None
 
     def top_position(self, position) -> None:
-        if top:= self.top_in_stack(position):
+        if top := self.top_in_stack(position):
             if top.name == 'voxel':
                 return top.position + Vec3(0, 0, self.GROUND_OFFSET - self.VOXEL_OFFSET_Z)
             if top.name == 'beeper' or top.name == 'paint':

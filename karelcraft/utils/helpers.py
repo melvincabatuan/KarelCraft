@@ -2,7 +2,6 @@
 
 INFINITY = -1
 
-
 '''
 Converts Vec2 or Vec3 to int tuple
 '''

@@ -8,10 +8,7 @@ from karelcraft.utils.helpers import vec2key
 
 class Karel(Button):
 
-    def __init__(self,
-                 world_file: str,
-                 textures: dict,
-                 ) -> None:
+    def __init__(self, world_file: str, textures: dict) -> None:
         super().__init__(
             parent=scene,
             color=color.white66,
@@ -42,9 +39,6 @@ class Karel(Button):
         self.start_beeper_count = self.world.world_loader.start_beeper_count
         self.num_beepers = self.start_beeper_count
 
-    def facing_to(self) -> str:
-        return self.direction.name
-
     def user_action(self, key) -> tuple:
         if self.direction != self.directions[key]:
             self.direction = self.directions[key]
@@ -60,9 +54,9 @@ class Karel(Button):
         if self.front_is_blocked():
             raise KarelException(
                 self.position,
-                self.facing_to(),
+                self.direction.name,
                 'move()',
-                "ERROR: Karel attempted to move(), but its front was not clear!",
+                "ERROR attempt to move()",
             )
         self.position += self.direction.value
         self.position = self.world.top_position(self.position)  # depth
@@ -126,7 +120,9 @@ class Karel(Button):
         return not self.left_is_clear()
 
     def right_is_clear(self) -> bool:
-        return self.direction_is_clear(Direction.rotate90(self.direction, 'counterclockwise'))
+        return self.direction_is_clear(
+            Direction.rotate90(self.direction, 'counterclockwise')
+        )
 
     def right_is_blocked(self) -> bool:
         return not self.right_is_clear()
@@ -135,9 +131,9 @@ class Karel(Button):
         if self.num_beepers == 0:
             raise KarelException(
                 self.position,
-                self.facing_to(),
+                self.direction.name,
                 'put_beeper()',
-                "ERROR: Karel attempted to put_beeper(), but it had none left in its bag.",
+                "ERROR attempt to put_beeper(), (none left in bag)",
             )
         if self.num_beepers != INFINITY:
             self.num_beepers -= 1
@@ -149,9 +145,9 @@ class Karel(Button):
         if self.no_beeper_present():
             raise KarelException(
                 self.position,
-                self.facing_to(),
+                self.direction.name,
                 'pick_beeper()',
-                "ERROR: Karel attempted to pick_beeper(), but it does not exist!",
+                "ERROR attempt to pick_beeper()",
             )
         if self.num_beepers != INFINITY:
             self.num_beepers += 1
@@ -193,8 +189,8 @@ class Karel(Button):
     def no_color_present(self) -> bool:
         return not self.color_present()
 
-    def put_block(self, texture) -> None:
-        num_of_blocks = self.world.add_voxel(self.position, texture)
+    def put_block(self, texture_name) -> None:
+        num_of_blocks = self.world.add_voxel(self.position, texture_name)
         self.update_z()
         return num_of_blocks
 
@@ -214,9 +210,9 @@ class Karel(Button):
         else:
             raise KarelException(
                 self.item_position(),
-                self.facing_to(),
+                self.direction.name,
                 'destroy_block()',
-                "ERROR: Karel attempted to destroy_block(), but it does not exist!",
+                'ERROR attempted to destroy_block()',
             )
 
     def remove_paint(self) -> None:
@@ -225,7 +221,7 @@ class Karel(Button):
         else:
             raise KarelException(
                 self.position,
-                self.facing_to(),
+                self.direction.name,
                 'remove_paint()',
-                "ERROR: Karel attempted to remove_paint(), but it does not exist!",
+                'ERROR attempt to remove_paint()',
             )
