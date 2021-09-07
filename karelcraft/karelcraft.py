@@ -154,6 +154,10 @@ def no_color_present() -> bool:
     pass
 
 
+def get_position() -> tuple:
+    pass
+
+
 def run_karel_program(world_file: str = "") -> None:
     student_filename = Path(sys.argv[0])
     app = App(student_filename, world_file)

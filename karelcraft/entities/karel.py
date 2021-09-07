@@ -225,3 +225,6 @@ class Karel(Button):
                 'remove_paint()',
                 'ERROR attempt to remove_paint()',
             )
+
+    def get_position(self) -> None:
+        return tuple(self.position)

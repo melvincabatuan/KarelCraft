@@ -1,6 +1,9 @@
 # from stanfordkarel module
 from pathlib import Path
 import importlib.util
+import traceback as tb
+import inspect
+import sys
 
 from karelcraft.entities.karel import Karel
 

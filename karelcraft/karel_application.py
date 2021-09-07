@@ -50,7 +50,7 @@ class App(Ursina):
         self.color_name = random.choice(COLOR_LIST)
 
     def setup_texture(self):
-        default_texture_path = Path(__file__).absolute().parent.parent / BLOCKS_PATH
+        default_texture_path = Path(__file__).absolute().parent / BLOCKS_PATH
         self.textures = {
             texture_path.stem.split('_')[0]: load_texture(BLOCKS_PATH + texture_path.stem + '.png')
             for texture_path in default_texture_path.glob("*.png")
