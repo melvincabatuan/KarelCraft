@@ -454,8 +454,8 @@ class App(Ursina):
             self.save_world()
         elif key == 'mouse1':  # left click
             self.destroy_item()
-        elif key == 'mouse3':  # right click
-            self.create_item()
+        # elif key == 'mouse3':  # right click
+        #     self.create_item()
         super().input(key)
 
     def end_frame(self, msg) -> None:
