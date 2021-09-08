@@ -1,5 +1,5 @@
 """ setup.py """
-from setuptools import setup  # type: ignore[import]
+from setuptools import setup, find_packages
 
 setup(
     name='karelcraft',
