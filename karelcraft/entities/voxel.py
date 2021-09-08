@@ -1,7 +1,8 @@
 from ursina import *
 from pathlib import Path
 
-MODEL_PATH = str(Path(__file__).absolute().parent.parent / 'assets/block')
+# MODEL_PATH = str(Path(__file__).absolute().parent.parent / 'assets/block')
+
 
 class Voxel(Button):
 
@@ -10,7 +11,8 @@ class Voxel(Button):
             parent=scene,
             position=position + Vec3(0, 0, -0.75),
             rotation=Vec3(0, 90, 90),
-            model=MODEL_PATH,
+            # model=MODEL_PATH,
+            model='block',
             # model='assets/block',
             origin_y=0.5,
             texture=texture,

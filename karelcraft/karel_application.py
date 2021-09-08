@@ -30,6 +30,7 @@ from typing import Callable
 TITLE = 'KarelCraft'
 BLOCKS_PATH = 'assets/blocks/'
 REPO_PATH = 'https://github.com/melvincabatuan/KarelCraft'
+application.asset_folder = Path(__file__).resolve().parent / 'assets'
 
 
 class App(Ursina):
@@ -50,9 +51,9 @@ class App(Ursina):
         self.color_name = random.choice(COLOR_LIST)
 
     def setup_texture(self):
-        default_texture_path = Path(__file__).absolute().parent / BLOCKS_PATH
+        default_texture_path = Path(__file__).resolve().parent / BLOCKS_PATH
         self.textures = {
-            texture_path.stem.split('_')[0]: load_texture(str(texture_path))
+            texture_path.stem.split('_')[0]: load_texture(str(texture_path.stem))
             for texture_path in default_texture_path.glob("*.png")
         }
         self.texture_names = list(self.textures.keys())
@@ -83,10 +84,9 @@ class App(Ursina):
         MOVE_SOUND_PATH = Path(__file__).absolute().parent.as_posix() + '/assets/sounds/move.mp3'
         DESTROY_SOUND_PATH = Path(__file__).absolute().parent.as_posix() + \
             '/assets/sounds/destroy.wav'
-        # self.move_sound = self.load_audio(
-        #     '/c/Users/ECE/anaconda3/Lib/site-packages/karelcraft/assets/move.mp3') # works
         self.move_sound = self.load_audio(MOVE_SOUND_PATH)
         self.destroy_sound = self.load_audio(DESTROY_SOUND_PATH)
+
         Light(type='ambient', color=(0.6, 0.6, 0.6, 1))
         Light(type='directional', color=(0.6, 0.6, 0.6, 1), direction=(1, 1, 1))
         EditorCamera(rotation_speed=25)  # lessen angle adjustment

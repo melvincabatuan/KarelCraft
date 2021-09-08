@@ -6,8 +6,8 @@ from karelcraft.entities.world import World
 from karelcraft.utils.helpers import vec2key
 
 
-MODEL_PATH = str(Path(__file__).absolute().parent.parent / 'assets/block')
-TEXTURE_PATH = str(Path(__file__).absolute().parent.parent / 'assets/karel_block')
+# MODEL_PATH = str(Path(__file__).absolute().parent.parent / 'assets/block')
+# TEXTURE_PATH = str(Path(__file__).absolute().parent.parent / 'assets/karel_block')
 
 class Karel(Button):
 
@@ -15,8 +15,10 @@ class Karel(Button):
         super().__init__(
             parent=scene,
             color=color.white66,
-            model=MODEL_PATH,  # 'sphere',
-            texture=TEXTURE_PATH,
+            # model=MODEL_PATH,  # 'sphere',
+            # texture=TEXTURE_PATH,
+            model='block',
+            texture='karel_block',
             rotation=Vec3(90, 90, 90),
             scale=0.48,
         )
