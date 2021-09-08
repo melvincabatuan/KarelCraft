@@ -1,0 +1,5 @@
+include karelcraft/worlds/*.w
+include karelcraft/assets/*.*
+include karelcraft/assets/blocks/*.png
+include karelcraft/assets/sounds/destroy.wav
+include karelcraft/assets/sounds/move.mp3
