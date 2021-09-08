@@ -9,6 +9,7 @@ setup(
     author_email='melvincabatuan@gmail.com',
     packages=['karelcraft'],
     install_requires=['ursina'],
+    include_package_data=True,
     version='0.1',
     license='MIT',
     description='Karel with MineCraft-like environment',
