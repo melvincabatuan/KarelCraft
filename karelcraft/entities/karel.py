@@ -6,14 +6,17 @@ from karelcraft.entities.world import World
 from karelcraft.utils.helpers import vec2key
 
 
+MODEL_PATH = str(Path(__file__).absolute().parent.parent / 'assets/block')
+TEXTURE_PATH = str(Path(__file__).absolute().parent.parent / 'assets/karel_block')
+
 class Karel(Button):
 
     def __init__(self, world_file: str, textures: dict) -> None:
         super().__init__(
             parent=scene,
             color=color.white66,
-            model='assets/block',  # 'sphere',
-            texture='assets/karel_block',
+            model=MODEL_PATH,  # 'sphere',
+            texture=TEXTURE_PATH,
             rotation=Vec3(90, 90, 90),
             scale=0.48,
         )
