@@ -9,9 +9,14 @@ setup(
     packages=['karelcraft','karelcraft.entities','karelcraft.utils'],
     install_requires=['ursina'],
     include_package_data=True,
-    python_requires='>=3.8',
     version='0.1',
     license='MIT',
     description='Karel with MineCraft-like environment',
     zip_safe=False,
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires='>=3.8',
 )
