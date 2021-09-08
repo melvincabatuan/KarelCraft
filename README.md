@@ -15,6 +15,12 @@ KarelCraft is an attempt to mix the ideas together and come up with an environme
 beginner programmers can learn fundamental programming skills, while working with an agent,
 i.e. Karel, doing actions and performing decisions in a small sandbox construction setting.  
 
+### Install
+
+```sh
+pip install git+https://github.com/melvincabatuan/KarelCraft.git
+```
+
 Sample screenshots:
 
 ### Karel Building Blocks around the Perimeter of the world
