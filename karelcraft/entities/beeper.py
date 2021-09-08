@@ -1,6 +1,8 @@
 from ursina import *
 
 
+ICON_PATH = str(Path(__file__).absolute().parent.parent / 'assets/icon.png')
+
 class Beeper(Entity):
 
     def __init__(self, position=(0, 0, 0), num_beepers=0):
@@ -10,7 +12,7 @@ class Beeper(Entity):
             scale=1.1,
             position=position,
             color=color.green,
-            texture='icon.png',
+            texture=ICON_PATH,
             collider='box'
         )
         self.num_beepers = num_beepers

@@ -52,7 +52,7 @@ class App(Ursina):
     def setup_texture(self):
         default_texture_path = Path(__file__).absolute().parent / BLOCKS_PATH
         self.textures = {
-            texture_path.stem.split('_')[0]: load_texture(BLOCKS_PATH + texture_path.stem + '.png')
+            texture_path.stem.split('_')[0]: load_texture(str(texture_path))
             for texture_path in default_texture_path.glob("*.png")
         }
         self.texture_names = list(self.textures.keys())
@@ -72,9 +72,21 @@ class App(Ursina):
         self.inject_decorator_namespace()
         self.run_code = False
 
+    def load_audio(self, filepath: str) -> audio.Audio:
+        sound = Audio(sound_file_name=None, loop=False, autoplay=False)
+        unix_path = filepath.replace('lib', 'Lib')
+        unix_path = unix_path.replace('C:', '/c')
+        sound.clip = base.loader.loadSfx(unix_path)
+        return sound
+
     def setup_sound_lights_cam(self):
-        self.move_sound = Audio('assets/sounds/move.mp3', autoplay=False)  # loop = True,
-        self.destroy_sound = Audio('assets/sounds/destroy.wav', autoplay=False)
+        MOVE_SOUND_PATH = Path(__file__).absolute().parent.as_posix() + '/assets/sounds/move.mp3'
+        DESTROY_SOUND_PATH = Path(__file__).absolute().parent.as_posix() + \
+            '/assets/sounds/destroy.wav'
+        # self.move_sound = self.load_audio(
+        #     '/c/Users/ECE/anaconda3/Lib/site-packages/karelcraft/assets/move.mp3') # works
+        self.move_sound = self.load_audio(MOVE_SOUND_PATH)
+        self.destroy_sound = self.load_audio(DESTROY_SOUND_PATH)
         Light(type='ambient', color=(0.6, 0.6, 0.6, 1))
         Light(type='directional', color=(0.6, 0.6, 0.6, 1), direction=(1, 1, 1))
         EditorCamera(rotation_speed=25)  # lessen angle adjustment
