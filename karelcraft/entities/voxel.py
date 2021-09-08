@@ -2,7 +2,7 @@ from ursina import *
 from pathlib import Path
 
 BLOCK_PATH = 'assets/block'
-MODEL_PATH = Path(__file__).absolute().parent / BLOCK_PATH
+MODEL_PATH = Path(__file__).absolute().parent.parent / BLOCK_PATH
 
 class Voxel(Button):
 
