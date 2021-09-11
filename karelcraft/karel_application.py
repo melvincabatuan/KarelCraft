@@ -255,7 +255,7 @@ class App(Ursina):
         y_pos = min(-1.6 * span, -12.7)
         self.z_pos = min(-1.4 * span, -12)
         camera.position = (x_center, y_pos, self.z_pos)
-        camera.rotation_x = -53
+        camera.rotation_x = -55
         self.view_button.select(self.view_button.buttons[1])
 
     def set_2d(self) -> None:
