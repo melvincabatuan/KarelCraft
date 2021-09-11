@@ -1,6 +1,6 @@
 from ursina import *
 
-from karelcraft.utils.helpers import vec2tup, INFINITY, KarelException
+from karelcraft.utils.helpers import INFINITY, KarelException
 from karelcraft.utils.direction import Direction
 from karelcraft.entities.world import World
 from karelcraft.utils.helpers import vec2key
@@ -26,10 +26,10 @@ class Karel(Button):
                            'd': Direction.EAST,
                            'w': Direction.NORTH,
                            's': Direction.SOUTH,
-                           'arrow_up': Direction.NORTH,
-                           'arrow_down': Direction.SOUTH,
-                           'arrow_left': Direction.WEST,
-                           'arrow_right': Direction.EAST,
+                           # 'arrow_up': Direction.NORTH,
+                           # 'arrow_down': Direction.SOUTH,
+                           # 'arrow_left': Direction.WEST,
+                           # 'arrow_right': Direction.EAST,
                            }
         self.world_file = world_file
         self.textures = textures

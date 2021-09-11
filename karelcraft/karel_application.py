@@ -9,6 +9,7 @@ ThanksTo: pokepetter (Ursina)
 License: MIT
 Version: 1.0.0
 Date of Creation: 5/17/2021
+Last Modified: 9/11/2021
 """
 from ursina import *
 from karelcraft.entities.karel import Karel
@@ -252,17 +253,17 @@ class App(Ursina):
         span = self.world.get_maxside()
         x_center, y_center = self.world.get_center()
         y_pos = min(-1.6 * span, -12.7)
-        z_pos = min(-1.4 * span, -12)
-        camera.position = (x_center, y_pos, z_pos)
-        camera.rotation_x = -55
+        self.z_pos = min(-1.4 * span, -12)
+        camera.position = (x_center, y_pos, self.z_pos)
+        camera.rotation_x = -53
         self.view_button.select(self.view_button.buttons[1])
 
     def set_2d(self) -> None:
         camera.rotation_x = 0
         span = self.world.get_maxside()
-        z_pos = min(-3 * span, -10)
+        self.z_pos = min(-3 * span, -10)
         x_center, y_center = self.world.get_center()
-        camera.position = (x_center, y_center, z_pos)
+        camera.position = (x_center, y_center, self.z_pos)
         self.view_button.select(self.view_button.buttons[0])
 
     def set_texture(self, key=None) -> None:
@@ -412,9 +413,9 @@ class App(Ursina):
             - Save world state: ctrl + s
             - Destroy objects: left mouse or mouse1
         '''
-        if key == 'w' or key == 'a' or key == 's' or key == 'd' \
-                or key == 'arrow_up' or key == 'arrow_down' \
-                or key == 'arrow_left' or key == 'arrow_right':
+        if key == 'w' or key == 'a' or key == 's' or key == 'd':
+                # or key == 'arrow_up' or key == 'arrow_down' \
+                # or key == 'arrow_left' or key == 'arrow_right':
             # Manual Movement
             action, is_valid = self.karel.user_action(key)
             msg = '\tturn_left()'
@@ -447,6 +448,16 @@ class App(Ursina):
             self.set_run_code()
         elif key == 'v':  # paint
             self.create_mode = 'voxel'
+        elif key == 'z':  # zoom
+            camera.rotation_x = 0
+            x_center, y_center = self.world.get_center()
+            self.z_pos += 5
+            camera.position = (x_center, y_center, self.z_pos)
+        elif key == 'x':  # zoom
+            camera.rotation_x = 0
+            x_center, y_center = self.world.get_center()
+            self.z_pos -= 5
+            camera.position = (x_center, y_center, self.z_pos)
         elif key == 'escape':
             print("Manual mode: press wasd or arrow keys to move")
             sys.exit()  # Manual mode
@@ -454,6 +465,15 @@ class App(Ursina):
             self.save_world()
         elif key == 'mouse1':  # left click
             self.destroy_item()
+        elif key == 'arrow_up':
+            camera.rotation_x += 2
+        elif key == 'arrow_down':
+            camera.rotation_x -= 2
+        elif key == 'arrow_right':
+            camera.rotation_y -= 2
+        elif key == 'arrow_left':
+            camera.rotation_y += 2
+
         # elif key == 'mouse3':  # right click
         #     self.create_item()
         super().input(key)

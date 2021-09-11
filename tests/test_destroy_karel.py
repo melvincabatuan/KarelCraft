@@ -1,7 +1,6 @@
 # Author: MKC
 
 from karelcraft.karelcraft import *
-from enum import Enum
 
 MODE = 'beeper'
 # MODE, COLOR = 'paint', 'blue'
