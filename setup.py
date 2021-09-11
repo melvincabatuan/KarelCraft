@@ -7,7 +7,7 @@ setup(
     author='Melvin Cabatuan',
     author_email='melvincabatuan@gmail.com',
     packages=['karelcraft','karelcraft.entities','karelcraft.utils'],
-    install_requires=['ursina','panda3d'],
+    install_requires=['panda3d','ursina'],
     include_package_data=True,
     version='0.1',
     license='MIT',
