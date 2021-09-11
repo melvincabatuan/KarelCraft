@@ -21,6 +21,12 @@ i.e. Karel, doing actions and performing decisions in a small sandbox constructi
 pip install git+https://github.com/melvincabatuan/KarelCraft.git
 ```
 
+### Uninstall
+
+```sh
+pip uninstall karelcraft
+```
+
 Sample screenshots:
 
 ### Karel Building Blocks around the Perimeter of the world
